@@ -3,6 +3,14 @@
 .env.local
 *.pem
 
+# Docs, PDFs, Markdown – do not add to repo
+*.pdf
+*.md
+!README.md
+!apen-agent-mvp/README.md
+docs/
+**/docs/
+
 # Python
 .venv/
 __pycache__/
