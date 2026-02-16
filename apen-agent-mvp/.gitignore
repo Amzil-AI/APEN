@@ -1,0 +1,22 @@
+# Environment and secrets – do not commit
+.env
+.env.local
+*.pem
+config/credentials/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Data and runtime
+data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

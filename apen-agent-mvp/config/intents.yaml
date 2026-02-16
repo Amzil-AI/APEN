@@ -1,0 +1,57 @@
+# APEN Agent MVP – Intent definitions for call qualification
+# Used by the agent to route: appointment, info, emergency, after_sales, partner, other
+
+intents:
+  appointment:
+    id: appointment
+    name: "Prise de rendez-vous / Appointment booking"
+    description: "Caller wants to book a slot (e.g. uniform collection, visit)"
+    keywords_fr: ["rendez-vous", "rdv", "réserver", "créneau", "tenue", "récupérer tenue", "passer"]
+    keywords_en: ["appointment", "book", "schedule", "slot", "uniform", "pick up"]
+    action: book_appointment
+    transfer_default: null  # handle in-agent
+
+  info:
+    id: info
+    name: "Demande d'information / Information request"
+    description: "Caller asks for hours, address, general info"
+    keywords_fr: ["horaires", "heures", "adresse", "ouvert", "fermé", "info", "renseignement", "rappeler", "rappel"]
+    keywords_en: ["hours", "address", "open", "closed", "information"]
+    action: provide_info
+    transfer_default: null
+
+  emergency:
+    id: emergency
+    name: "Urgence opérationnelle / Operational emergency"
+    description: "Urgent operational or site issue"
+    keywords_fr: ["urgence", "urgent", "incident", "problème site", "alerte"]
+    keywords_en: ["emergency", "urgent", "incident", "alert"]
+    action: transfer
+    transfer_default: operations
+
+  after_sales:
+    id: after_sales
+    name: "SAV / After-sales"
+    description: "Product or service issue, complaint"
+    keywords_fr: ["sav", "réclamation", "ne fonctionne pas", "panne", "défaut"]
+    keywords_en: ["complaint", "not working", "broken", "issue"]
+    action: transfer
+    transfer_default: support
+
+  partner:
+    id: partner
+    name: "Partenaire / Partner"
+    description: "Partner or B2B contact"
+    keywords_fr: ["partenaire", "partenariat", "proposition", "devis", "commercial"]
+    keywords_en: ["partner", "partnership", "quote", "commercial"]
+    action: transfer
+    transfer_default: commercial
+
+  other:
+    id: other
+    name: "Autre / Other"
+    description: "Unclassified; collect summary for callback"
+    keywords_fr: []
+    keywords_en: []
+    action: collect_summary
+    transfer_default: reception

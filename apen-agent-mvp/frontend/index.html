@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APEN Agent MVP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1 class="logo">APEN <span class="logo-sub">Agent MVP</span></h1>
+      <nav class="nav">
+        <a href="#pipeline" class="nav-link">Pipeline</a>
+        <a href="#intent" class="nav-link">Intent</a>
+        <a href="#audio" class="nav-link">Audio</a>
+        <a href="#slots" class="nav-link">Créneaux</a>
+        <a href="#appointments" class="nav-link">RDV</a>
+        <a href="#summaries" class="nav-link">Rappels</a>
+        <a href="#voice" class="nav-link">Voice</a>
+      </nav>
+      <div class="api-status" id="apiStatus">—</div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="hero">
+      <p class="hero-project">Agent conversationnel APEN – réception des appels (multi-sites : Paris, Le Havre, Reims, Nancy, Nantes). Périmètre MVP selon l’étude de faisabilité.</p>
+      <p class="hero-tagline">Réception 24/7 · Prise de rendez-vous (ex. récupération tenue) · Qualification · Transferts · Synthèses rappel</p>
+      <p class="hero-desc">Démo du moteur d’intentions et des APIs (agenda, rappels, voice). Connectez Vapi à l’API pour les appels réels.</p>
+    </section>
+
+    <!-- Pipeline (take call → check intent → act) -->
+    <section id="pipeline" class="card pipeline-card">
+      <h2>Pipeline MVP : prise d’appel → intention → action</h2>
+      <p class="card-desc">Flux réel : appel entrant, qualification, puis book / transfert / synthèse rappel.</p>
+      <ol class="pipeline-steps">
+        <li><strong>Prendre l’appel</strong> — Réception 24/7 (Vapi ou autre).</li>
+        <li><strong>Accueillir</strong> — Dire l’accroche (<code>GET /voice/prompt</code>).</li>
+        <li><strong>Récupérer la demande</strong> — Parole → texte (STT) → transcript envoyé à l’API.</li>
+        <li><strong>Vérifier l’intention</strong> — RDV, info, urgence, SAV, partenaire, autre (<code>intents.yaml</code>).</li>
+        <li><strong>Décider l’action</strong> — book_appointment, transfer, ou collect_summary.</li>
+        <li><strong>Agir</strong> — Proposer créneaux + créer RDV · ou transférer vers le bon numéro · ou enregistrer une synthèse rappel.</li>
+      </ol>
+      <p class="pipeline-summary">Donc : <strong>Appel → Accueil → Parole (transcript) → Intent → Action → Book / Transfert / Rappel</strong>.</p>
+    </section>
+    <!-- Intent -->
+    <section id="intent" class="card">
+      <h2>Test intent (texte)</h2>
+      <p class="card-desc">Saisissez une phrase comme un appelant : détection d’intention et action.</p>
+      <div class="form-row">
+        <input type="text" id="intentMessage" placeholder="Ex: Je voudrais un rendez-vous pour récupérer ma tenue" class="input input-wide">
+        <select id="intentLang" class="input">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+        <button type="button" id="intentBtn" class="btn btn-primary">Détecter</button>
+      </div>
+      <div id="intentResult" class="result-box" aria-live="polite"></div>
+    </section>
+
+    <!-- Audio -->
+    <section id="audio" class="card">
+      <h2>Test audio (Whisper + intent)</h2>
+      <p class="card-desc">Envoyez un fichier audio (ex. enregistrement d’appel) : transcription Whisper puis intention et routage — comme en démo avec un vrai fichier.</p>
+      <div class="form-row">
+        <input type="file" id="audioFile" accept=".mp3,.wav,.m4a,.webm,.ogg,.flac" class="input-file">
+        <span id="audioFileName" class="audio-file-name" aria-live="polite"></span>
+        <select id="audioLang" class="input">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+        <button type="button" id="audioBtn" class="btn btn-primary">Transcrire & intent</button>
+      </div>
+      <div id="audioResult" class="result-box" aria-live="polite"></div>
+    </section>
+
+    <!-- Slots -->
+    <section id="slots" class="card">
+      <h2>Créneaux disponibles</h2>
+      <p class="card-desc">Choisir une date pour afficher les créneaux (agenda).</p>
+      <div class="form-row">
+        <input type="date" id="slotsDate" class="input">
+        <button type="button" id="slotsBtn" class="btn btn-primary">Charger</button>
+      </div>
+      <div id="slotsResult" class="result-box" aria-live="polite"></div>
+    </section>
+
+    <!-- Create appointment -->
+    <section id="appointments" class="card">
+      <h2>Créer un rendez-vous</h2>
+      <p class="card-desc">Enregistrement d’un RDV dans l’agenda (ex. récupération de tenue).</p>
+      <div class="form-grid">
+        <label>Début (date/heure)</label>
+        <input type="datetime-local" id="apptStart" class="input">
+        <label>Fin (date/heure)</label>
+        <input type="datetime-local" id="apptEnd" class="input">
+        <label>Objet</label>
+        <input type="text" id="apptSummary" placeholder="Récupération tenue – David" class="input">
+        <label>E-mail (optionnel)</label>
+        <input type="email" id="apptEmail" placeholder="email@exemple.fr" class="input">
+      </div>
+      <div class="form-row">
+        <button type="button" id="apptBtn" class="btn btn-primary">Créer le RDV</button>
+      </div>
+      <div id="apptResult" class="result-box" aria-live="polite"></div>
+    </section>
+
+    <!-- Callback summaries -->
+    <section id="summaries" class="card">
+      <h2>Rappels (callback)</h2>
+      <p class="card-desc">Liste des synthèses en attente de rappel ; ajout manuel ou via agent.</p>
+      <div class="form-row">
+        <select id="summariesFilter" class="input">
+          <option value="">Tous</option>
+          <option value="pending">En attente</option>
+          <option value="called">Rappelé</option>
+          <option value="closed">Clôturé</option>
+        </select>
+        <button type="button" id="summariesRefresh" class="btn btn-secondary">Actualiser</button>
+      </div>
+      <div id="summariesList" class="summaries-list" aria-live="polite"></div>
+      <hr class="divider">
+      <h3>Ajouter une synthèse</h3>
+      <div class="form-grid">
+        <label>Nom</label>
+        <input type="text" id="sumName" class="input" placeholder="Nom de l'appelant">
+        <label>Téléphone</label>
+        <input type="tel" id="sumPhone" class="input" placeholder="+33 6 00 00 00 00">
+        <label>Motif</label>
+        <input type="text" id="sumReason" class="input" placeholder="Motif du rappel">
+        <label>Site</label>
+        <select id="sumSite" class="input">
+          <option value="paris">Paris</option>
+          <option value="le_havre">Le Havre</option>
+          <option value="reims">Reims</option>
+          <option value="nancy">Nancy</option>
+          <option value="nantes">Nantes</option>
+        </select>
+        <label>Urgence</label>
+        <select id="sumUrgency" class="input">
+          <option value="low">Basse</option>
+          <option value="medium">Moyenne</option>
+          <option value="high">Haute</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <button type="button" id="sumAddBtn" class="btn btn-primary">Enregistrer</button>
+      </div>
+      <div id="sumAddResult" class="result-box" aria-live="polite"></div>
+    </section>
+
+    <!-- Voice / Integration (build Limova and more) -->
+    <section id="voice" class="card">
+      <h2>Voice – Intégration (on construit Limova et plus)</h2>
+      <p class="card-desc">Utilisez notre API comme « cerveau » des appels. Avec Vapi : définissez l’URL serveur ci-dessous. Pas de Twilio, pas de Limova.</p>
+      <div class="form-row">
+        <label class="input-wide" style="color: var(--text-muted); font-size: 0.9rem;">Server URL (Vapi) :</label>
+      </div>
+      <div class="form-row">
+        <code id="voiceWebhookUrl" class="input input-wide" style="font-family: var(--font-mono); font-size: 0.85rem;"></code>
+        <button type="button" id="voiceCopyBtn" class="btn btn-secondary">Copier</button>
+      </div>
+      <p class="card-desc" style="margin-top: 0.5rem;">Voir <a href="/docs" target="_blank" rel="noopener">API Docs</a> pour <code>GET /voice/prompt</code>, <code>POST /voice/process</code>, <code>POST /webhooks/vapi</code>.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a href="/docs" target="_blank" rel="noopener">API Docs</a> ·
+    <a href="https://docs.vapi.ai/server-url" target="_blank" rel="noopener">Vapi Server URL</a> ·
+    APEN Agent – on construit Limova et plus
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

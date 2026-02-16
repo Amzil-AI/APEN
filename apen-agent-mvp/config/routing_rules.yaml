@@ -1,0 +1,53 @@
+# APEN Agent MVP – Routing rules (transfer by intent and optional site)
+# Sites: paris, le_havre, reims, nancy, nantes
+
+routing:
+  by_intent:
+    appointment:
+      target: in_agent
+      message: "Je peux prendre votre rendez-vous (ex. récupération de tenue)."
+    info:
+      target: in_agent
+      message: "Je peux vous renseigner (horaires, adresse)."
+    emergency:
+      target: operations
+      phone_override: null   # set per site if needed
+      message: "Je transfère votre appel vers le service opérations."
+    after_sales:
+      target: support
+      message: "Je transfère vers le service support."
+    partner:
+      target: commercial
+      message: "Je transfère vers le service commercial."
+    other:
+      target: reception
+      message: "Je note vos informations pour un rappel."
+
+  by_site:
+    paris:
+      operations: "+33XXXXXXXX"   # replace with real numbers
+      support: "+33XXXXXXXX"
+      commercial: "+33XXXXXXXX"
+      reception: "+33XXXXXXXX"
+    le_havre:
+      operations: "+33XXXXXXXX"
+      support: "+33XXXXXXXX"
+      commercial: "+33XXXXXXXX"
+      reception: "+33XXXXXXXX"
+    reims:
+      operations: "+33XXXXXXXX"
+      support: "+33XXXXXXXX"
+      commercial: "+33XXXXXXXX"
+      reception: "+33XXXXXXXX"
+    nancy:
+      operations: "+33XXXXXXXX"
+      support: "+33XXXXXXXX"
+      commercial: "+33XXXXXXXX"
+      reception: "+33XXXXXXXX"
+    nantes:
+      operations: "+33XXXXXXXX"
+      support: "+33XXXXXXXX"
+      commercial: "+33XXXXXXXX"
+      reception: "+33XXXXXXXX"
+
+  default_site: paris
