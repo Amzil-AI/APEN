@@ -1,0 +1,23 @@
+# Render Blueprint – APEN Agent MVP
+# Deploy from repo root; service runs from apen-agent-mvp/
+
+services:
+  - type: web
+    name: apen-agent-mvp
+    runtime: python
+    rootDir: apen-agent-mvp
+
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+
+    envVars:
+      - key: BASE_URL
+        sync: false
+        # Set in Render Dashboard to your public URL, e.g. https://apen-agent-mvp.onrender.com
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_CALENDAR_ID
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        sync: false
+        # e.g. /etc/secrets/google-service-account.json when using Render Secret Files

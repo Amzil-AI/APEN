@@ -13,7 +13,7 @@ if _env_path.exists():
     from dotenv import load_dotenv
     load_dotenv(_env_path)
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel, Field
@@ -116,6 +116,33 @@ def app_static(path: str):
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "apen-agent-mvp"}
+
+
+def _get_base_url(request: Request) -> str:
+    """Base URL for links (from BASE_URL env or request headers)."""
+    base = os.environ.get("BASE_URL", "").rstrip("/")
+    if not base:
+        try:
+            scheme = request.headers.get("x-forwarded-proto") or request.url.scheme
+            host = request.headers.get("x-forwarded-host") or request.url.netloc
+            base = f"{scheme}://{host}"
+        except Exception:
+            base = "http://localhost:8000"
+    return base.rstrip("/")
+
+
+@app.get("/config")
+def get_config(request: Request):
+    """
+    Public config for the frontend (base URL for webhook, planning links).
+    Set BASE_URL in production (e.g. https://your-app.onrender.com).
+    """
+    base = _get_base_url(request)
+    return {
+        "base_url": base,
+        "webhook_path": "/webhooks/vapi",
+        "webhook_url": f"{base}/webhooks/vapi",
+    }
 
 
 @app.post("/intent", response_model=dict)
@@ -301,7 +328,7 @@ def webhook_vapi(body: dict):
 # --- Planning (publish/send – beyond Limova) ---
 
 @app.post("/planning/upload")
-def planning_upload(file: UploadFile = File(...)):
+def planning_upload(request: Request, file: UploadFile = File(...)):
     """Upload a planning file (PDF, Excel, etc.). Returns id and link to download."""
     ext = Path(file.filename or "").suffix.lower()
     if ext not in planning.ALLOWED_EXTENSIONS:
@@ -311,7 +338,7 @@ def planning_upload(file: UploadFile = File(...)):
         result = planning.save_planning(content, file.filename or "planning")
     except ValueError as e:
         raise HTTPException(422, str(e))
-    base = os.environ.get("BASE_URL", "http://localhost:8000").rstrip("/")
+    base = _get_base_url(request)
     result["download_url"] = f"{base}/planning/{result['id']}"
     return result
 

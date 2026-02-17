@@ -81,12 +81,24 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 - **App (frontend):** http://localhost:8000/ or http://localhost:8000/app/  
 - API docs: http://localhost:8000/docs  
 - Health: http://localhost:8000/health  
+- Config (base URL, webhook URL): http://localhost:8000/config  
+
+## Deploy on Render
+
+1. Connect the repo (root: this repo; set **Root Directory** to `apen-agent-mvp`).
+2. **Build command:** `pip install -r requirements.txt`
+3. **Start command:** `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
+4. **Environment:** Set `BASE_URL` to your public URL (e.g. `https://your-app.onrender.com`) so the app and Vapi webhook URL are correct. Optionally: `OPENAI_API_KEY`, `GOOGLE_CALENDAR_ID`, `GOOGLE_APPLICATION_CREDENTIALS` (path to secret file).
+5. **Vapi:** In Vapi dashboard set Server URL to `https://your-app.onrender.com/webhooks/vapi`.
+
+A `render.yaml` at repo root is available for Blueprint deploy.
 
 ## API overview
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
+| GET | `/config` | Base URL and webhook URL (for frontend; uses `BASE_URL` or request) |
 | POST | `/intent` | Detect intent from text `{ "message": "...", "language": "fr" }` |
 | POST | `/audio/intent` | **Upload audio file** → transcribe (Whisper) → intent + action + routing (needs `OPENAI_API_KEY`) |
 | GET | `/slots?date=2025-02-18` | Available appointment slots for a date |

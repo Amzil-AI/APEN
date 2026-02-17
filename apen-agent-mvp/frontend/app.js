@@ -281,11 +281,17 @@ document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
   }
 });
 
-// --- Voice webhook URL (build Limova and more)
+// --- Voice webhook URL (from /config or current origin)
 const webhookEl = document.getElementById('voiceWebhookUrl');
 if (webhookEl) {
-  const base = window.location.origin;
-  webhookEl.textContent = base + '/webhooks/vapi';
+  fetch(API + '/config')
+    .then((r) => r.ok ? r.json() : {})
+    .then((c) => {
+      webhookEl.textContent = (c.webhook_url || window.location.origin + '/webhooks/vapi');
+    })
+    .catch(() => {
+      webhookEl.textContent = window.location.origin + '/webhooks/vapi';
+    });
 }
 document.getElementById('voiceCopyBtn')?.addEventListener('click', () => {
   const url = document.getElementById('voiceWebhookUrl')?.textContent;
