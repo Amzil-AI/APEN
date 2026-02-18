@@ -18,6 +18,7 @@ from typing import Any, Optional
 from . import voice
 from .config_loader import get_vapi_config
 from . import call_log
+from . import summary_store
 from . import calendar_client
 
 # In-memory: call_id -> last apen_route result (so we can return destination on transfer-destination-request)
@@ -262,6 +263,58 @@ def handle_vapi_message(body: dict) -> Optional[dict]:
     if typ == "transfer-destination-request":
         return handle_transfer_destination_request(call)
 
+    # Post-call automation: when the call ends, mark it and optionally store full transcript / update callback summary
+    if typ in ("end-of-call-report", "endOfCallReport"):
+        _handle_end_of_call_report(call, msg, log)
+        return None
+    if typ in ("status-update", "statusUpdate"):
+        status = (msg.get("status") or body.get("status") or "").strip().lower()
+        if status == "ended":
+            _handle_call_ended(call, msg, log)
+        return None
+
     if typ or body:
         log.warning("Vapi webhook unhandled message type: %s (keys: %s)", typ or "(empty)", list(body.keys()))
     return None
+
+
+def _extract_transcript_from_message(msg: dict) -> Optional[str]:
+    """Get full transcript from Vapi end-of-call or status message (artifact, transcript, or summary)."""
+    if not msg:
+        return None
+    # Vapi may send transcript in different shapes
+    artifact = msg.get("artifact") or msg.get("artifacts")
+    if isinstance(artifact, dict):
+        t = artifact.get("transcript") or artifact.get("summary")
+        if isinstance(t, str) and t.strip():
+            return t.strip()
+    if isinstance(artifact, list) and artifact:
+        for a in artifact:
+            if isinstance(a, dict):
+                t = a.get("transcript") or a.get("summary")
+                if isinstance(t, str) and t.strip():
+                    return t.strip()
+    t = msg.get("transcript") or msg.get("summary")
+    if isinstance(t, str) and t.strip():
+        return t.strip()
+    return None
+
+
+def _handle_call_ended(call: Optional[dict], msg: dict, log) -> None:
+    """Mark call as ended and run post-call automation (store transcript, update callback summary notes)."""
+    if not call or not call.get("id"):
+        return
+    call_id = call["id"]
+    transcript = _extract_transcript_from_message(msg)
+    call_log.call_ended(call_id, full_transcript=transcript)
+    log.info("Call ended: %s (transcript length: %s)", call_id, len(transcript) if transcript else 0)
+    # If we have a linked callback summary, append full transcript to its notes
+    c = call_log.get_call(call_id)
+    if c and c.get("summary_id") and transcript:
+        summary_store.update_notes(c["summary_id"], transcript, append=True)
+        log.info("Updated callback summary %s with full transcript", c["summary_id"])
+
+
+def _handle_end_of_call_report(call: Optional[dict], msg: dict, log) -> None:
+    """Handle Vapi end-of-call-report: same as call ended, with transcript from report."""
+    _handle_call_ended(call, msg, log)

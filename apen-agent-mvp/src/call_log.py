@@ -107,6 +107,32 @@ def log_appointment_booked(call_id: str, appointment_id: str) -> None:
         _save()
 
 
+def call_ended(
+    call_id: str,
+    ended_at: Optional[str] = None,
+    full_transcript: Optional[str] = None,
+) -> None:
+    """Mark call as ended (post-call automation). Optionally store full transcript from Vapi end-of-call-report."""
+    if not call_id:
+        return
+    _load()
+    call = next((c for c in _calls if c.get("call_id") == call_id), None)
+    if not call:
+        return
+    call["ended_at"] = ended_at or (datetime.utcnow().isoformat() + "Z")
+    if full_transcript is not None:
+        call["full_transcript"] = (full_transcript or "")[:10000]  # cap length
+    _save()
+
+
+def get_call(call_id: str) -> Optional[dict]:
+    """Return the call record for call_id, or None."""
+    if not call_id:
+        return None
+    _load()
+    return next((c for c in _calls if c.get("call_id") == call_id), None)
+
+
 def list_calls(limit: int = 100) -> list[dict]:
     """List recent calls (newest first)."""
     _load()

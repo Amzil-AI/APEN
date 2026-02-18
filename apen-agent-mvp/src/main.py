@@ -343,9 +343,9 @@ def _call_purpose_line(c: dict) -> str:
         "emergency": "Urgent / emergency",
         "after_sales": "After-sales",
         "partner": "Partner inquiry",
-        "other": "General inquiry",
+        "other": "Other",
     }
-    label = intent_labels.get(intent, intent.replace("_", " ").title()) if intent else "General inquiry"
+    label = intent_labels.get(intent, intent.replace("_", " ").title()) if intent else "Other"
     if appointment_id:
         return f"{label} — appointment booked."
     if outcome == "transfer":

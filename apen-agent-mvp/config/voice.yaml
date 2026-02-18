@@ -7,13 +7,15 @@ greeting: |
 
 messages:
   transfer_in_progress: "Je vous transfère. Merci de patienter."
-  unclear: "Je n'ai pas bien compris. Un conseiller vous rappellera. Au revoir."
+  # Used only when transcript is empty; otherwise we use callback_by_intent.other or default
+  unclear: "Nous avons bien noté votre demande. Un conseiller vous recontactera. Au revoir."
 
-  # Message said when not transferring (callback) – by intent
+  # Message said when not transferring (callback) – by intent. "other" = any request we'll get back to.
   callback_by_intent:
     appointment: "Pour la prise de rendez-vous, un conseiller vous rappellera sous peu. Au revoir."
     callback: "Nous avons bien noté votre demande de rappel. Un conseiller vous rappellera. Au revoir."
     info: "Un conseiller vous rappellera pour vous donner les informations. Au revoir."
+    other: "Nous avons bien noté votre demande. Un conseiller vous recontactera. Au revoir."
     default: "Nous avons bien noté votre demande. Un conseiller vous rappellera. Au revoir."
 
 # Vapi assistant (optional overrides)

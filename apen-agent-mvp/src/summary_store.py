@@ -99,3 +99,17 @@ def update_status(summary_id: str, status: str) -> Optional[dict]:
             _save()
             return s
     return None
+
+
+def update_notes(summary_id: str, notes: str, append: bool = False) -> Optional[dict]:
+    """Set or append notes on a callback summary (e.g. full transcript after call ended)."""
+    _load()
+    for s in _summaries:
+        if s.get("id") == summary_id:
+            if append and s.get("notes"):
+                s["notes"] = (s.get("notes") or "").strip() + "\n\n" + (notes or "").strip()
+            else:
+                s["notes"] = (notes or "").strip()
+            _save()
+            return s
+    return None
