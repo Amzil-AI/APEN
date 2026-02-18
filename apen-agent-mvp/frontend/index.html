@@ -20,6 +20,7 @@
         <a href="#slots" class="nav-link">Slots</a>
         <a href="#appointments" class="nav-link">Appointments</a>
         <a href="#summaries" class="nav-link">Callbacks</a>
+        <a href="#calls" class="nav-link">Calls</a>
         <a href="#test-call" class="nav-link">Test call</a>
         <a href="#voice" class="nav-link">Voice</a>
       </nav>
@@ -164,6 +165,16 @@
         <button type="button" id="sumAddBtn" class="btn btn-primary">Save</button>
       </div>
       <div id="sumAddResult" class="result-box" aria-live="polite"></div>
+    </section>
+
+    <!-- Call log (Vapi calls → transcript, intent, outcome) -->
+    <section id="calls" class="card">
+      <h2>Calls</h2>
+      <p class="card-desc">Recent calls: transcript, intent, and what the agent did (callback summary or appointment).</p>
+      <div class="form-row">
+        <button type="button" id="callsRefresh" class="btn btn-secondary">Refresh</button>
+      </div>
+      <div id="callsList" class="calls-list" aria-live="polite"></div>
     </section>
 
     <!-- Test call taking -->

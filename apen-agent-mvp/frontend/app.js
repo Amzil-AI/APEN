@@ -284,6 +284,55 @@ async function loadSummaries() {
 document.getElementById('summariesRefresh')?.addEventListener('click', loadSummaries);
 document.getElementById('summariesFilter')?.addEventListener('change', loadSummaries);
 
+// --- Calls (Vapi call log) ---
+function renderCalls(list) {
+  const container = document.getElementById('callsList');
+  if (!container) return;
+  if (!list || list.length === 0) {
+    container.innerHTML = '<p class="card-desc">No calls yet. Calls appear here when someone uses the Vapi number.</p>';
+    return;
+  }
+  container.innerHTML = list
+    .map(
+      (c) => {
+        const started = (c.started_at || '').replace('Z', ' ').slice(0, 19);
+        const events = (c.events || []);
+        const last = events[events.length - 1];
+        const transcript = last ? (last.transcript || '—').slice(0, 120) : '—';
+        const intent = last ? (last.intent || '—') : '—';
+        const outcome = last ? (last.outcome || '—') : '—';
+        const summaryId = c.summary_id || '';
+        const appointmentId = c.appointment_id || '';
+        const done = summaryId ? 'Callback saved' : appointmentId ? 'Appointment booked' : outcome;
+        return `
+    <div class="call-item">
+      <div class="call-meta"><strong>${escapeHtml(started)}</strong> · ${escapeHtml(c.caller_phone || '—')}</div>
+      <div class="call-transcript">${escapeHtml(transcript)}${transcript.length >= 120 ? '…' : ''}</div>
+      <div class="call-outcome">Intent: ${escapeHtml(intent)} · ${escapeHtml(done)}</div>
+      ${summaryId ? `<div class="call-ref">Callback: <code>${escapeHtml(summaryId)}</code></div>` : ''}
+      ${appointmentId ? `<div class="call-ref">Appointment: <code>${escapeHtml(appointmentId)}</code></div>` : ''}
+    </div>
+  `;
+      }
+    )
+    .join('');
+}
+
+async function loadCalls() {
+  const container = document.getElementById('callsList');
+  if (!container) return;
+  try {
+    const r = await fetch(API + '/calls');
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || r.statusText);
+    renderCalls(data.calls || []);
+  } catch (e) {
+    container.innerHTML = '<p class="result-box error">Error: ' + escapeHtml(e.message) + '</p>';
+  }
+}
+
+document.getElementById('callsRefresh')?.addEventListener('click', loadCalls);
+
 // --- Add summary ---
 document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
   const name = document.getElementById('sumName').value.trim();
@@ -425,9 +474,10 @@ document.getElementById('audioLang')?.addEventListener('change', function () {
   if (intentLang) intentLang.value = this.value;
 });
 
-// Init: health + load summaries + set default date
+// Init: health + load summaries + calls + set default date
 checkHealth();
 loadSummaries();
+loadCalls();
 const today = new Date().toISOString().slice(0, 10);
 const dateEl = document.getElementById('slotsDate');
 if (dateEl && !dateEl.value) dateEl.value = today;

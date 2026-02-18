@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 import tempfile
 import os
 
-from . import intent, calendar_client, summary_store
+from . import intent, calendar_client, summary_store, call_log
 from .config_loader import get_routing_rules, get_routing_target, get_intents
 from . import transcribe
 from . import voice
@@ -37,6 +37,7 @@ def _startup():
     """Automated startup: ensure storage, validate config, log env status."""
     summary_store.ensure_storage()
     planning.ensure_storage()
+    call_log.ensure_storage()
     intents_data = get_intents()
     intent_ids = list((intents_data.get("intents") or {}).keys())
     routing_data = get_routing_rules()
@@ -317,6 +318,14 @@ def update_summary_status(summary_id: str, body: StatusUpdate):
     if not s:
         raise HTTPException(404, "Summary not found")
     return s
+
+
+# --- Call log (Vapi calls → dashboard) ---
+
+@app.get("/calls")
+def list_calls(limit: int = 100):
+    """List recent calls (transcript, intent, outcome, summary/appointment). For dashboard."""
+    return {"calls": call_log.list_calls(limit=limit)}
 
 
 # --- Voice (provider-agnostic: Vapi, Bland, or any platform – no Twilio) ---

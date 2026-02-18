@@ -383,6 +383,39 @@ body {
   gap: 0.5rem;
 }
 
+.calls-list {
+  margin-top: 1rem;
+}
+
+.call-item {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+}
+
+.call-item .call-meta {
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.call-item .call-transcript {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.call-item .call-outcome {
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.call-item .call-ref {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
 /* Pipeline steps */
 .pipeline-card {
   border-left: 4px solid var(--accent);

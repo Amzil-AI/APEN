@@ -81,7 +81,7 @@ def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] 
         }
 
     # No transfer: store summary and return message to say
-    summary_store.add_summary(
+    entry = summary_store.add_summary(
         caller_name="Appelant",
         caller_phone=caller_phone or "Inconnu",
         reason=transcript[:500],
@@ -96,4 +96,5 @@ def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] 
         "response_type": "callback",
         "transfer_number": None,
         "say_message": _say_message_for_intent(intent_id),
+        "summary_id": entry.get("id"),
     }
