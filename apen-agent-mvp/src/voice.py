@@ -44,7 +44,7 @@ def _say_message_for_intent(intent_id: str) -> str:
     return _cfg_callback_msg(intent_id)
 
 
-def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] = None) -> dict:
+def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] = None, language: str = "fr") -> dict:
     """
     Process caller speech: detect intent, return instructions for any voice provider.
     Creates a callback summary when not transferring.
@@ -65,7 +65,7 @@ def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] 
             "say_message": _cfg_unclear_msg(),
         }
 
-    intent_id = intent.detect_intent(transcript, "fr")
+    intent_id = intent.detect_intent(transcript, language or "fr")
     action = intent.get_intent_action(intent_id)
     target = get_routing_target(intent_id)
     transfer_number = get_transfer_number(intent_id, site)

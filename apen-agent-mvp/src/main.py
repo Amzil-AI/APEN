@@ -325,6 +325,7 @@ class VoiceProcessRequest(BaseModel):
     transcript: str
     caller_phone: str = ""
     site: Optional[str] = None
+    language: str = "fr"
 
 
 @app.get("/voice/prompt")
@@ -340,7 +341,7 @@ def voice_process(body: VoiceProcessRequest):
     Returns: intent, action, routing_target, response_type (transfer | callback),
     transfer_number (if transfer), say_message (if callback). Creates callback summary when not transferring.
     """
-    return voice.process_speech(body.transcript, body.caller_phone, body.site)
+    return voice.process_speech(body.transcript, body.caller_phone, body.site, body.language)
 
 
 # --- Vapi webhook (build Limova and more: our brain + Vapi for the phone) ---

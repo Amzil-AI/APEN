@@ -45,8 +45,21 @@ body {
   padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem 1.5rem;
   flex-wrap: wrap;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.lang-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .logo {
@@ -92,10 +105,10 @@ body {
 }
 
 .api-status {
-  margin-left: auto;
   font-size: 0.8rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 .api-status.ok { color: var(--success); }
@@ -158,6 +171,7 @@ body {
   border-radius: var(--radius);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  scroll-margin-top: 5rem;
 }
 
 .card h2 {
@@ -201,6 +215,12 @@ body {
   font-size: 0.9rem;
 }
 
+.form-label-optional {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 .input {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
@@ -218,7 +238,19 @@ body {
 
 .input-wide {
   flex: 1;
-  min-width: 200px;
+  min-width: 120px;
+}
+
+.input-readonly {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  cursor: text;
+  color: var(--text);
+}
+
+.card-desc-small {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
 }
 
 .input-file {
@@ -390,6 +422,34 @@ body {
   border: none;
   border-top: 1px solid var(--border);
   margin: 1.5rem 0 1rem 0;
+}
+
+.voice-url-row .input-wide {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    padding: 0.75rem 1rem;
+  }
+  .nav {
+    order: 1;
+    width: 100%;
+  }
+  .header-right {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .main {
+    padding: 1.25rem 1rem;
+  }
+  .form-row {
+    gap: 0.5rem;
+  }
+  .btn {
+    flex-shrink: 0;
+  }
 }
 
 /* Footer */

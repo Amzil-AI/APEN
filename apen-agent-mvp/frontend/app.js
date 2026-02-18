@@ -22,11 +22,11 @@ function setNextStep(el, content) {
 function setLoading(btn, loading) {
   if (!btn) return;
   btn.disabled = loading;
-  btn.textContent = loading ? '…' : btn.dataset.label || 'Envoyer';
+  btn.textContent = loading ? '…' : btn.dataset.label || 'Submit';
 }
 
 function getLang() {
-  return localStorage.getItem(LANG_KEY) || 'fr';
+  return localStorage.getItem(LANG_KEY) || 'en';
 }
 
 function setLang(lang) {
@@ -49,24 +49,25 @@ function applyFlowAfterIntent(data, nextStepElId, scrollTargetId) {
   setNextStep(nextEl, '');
 
   if (action === 'book_appointment' && routing === 'in_agent') {
-    setNextStep(nextEl, '→ Proposez des créneaux dans la section « Créneaux disponibles » ci-dessous.');
+    setNextStep(nextEl, '→ Offer slots in the « Available slots » section below.');
     if (scrollEl) scrollEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (action === 'provide_info' && routing === 'in_agent') {
-    setNextStep(nextEl, '→ Donnez les infos demandées (horaires, adresse) ou enregistrez un rappel dans « Rappels ».');
+    setNextStep(nextEl, '→ Give the requested info (hours, address) or save a callback in « Callbacks ».');
   } else if (action === 'collect_summary' || routing === 'reception') {
-    setNextStep(nextEl, '→ Synthèse rappel : consultez la section « Rappels » ci-dessous.');
+    setNextStep(nextEl, '→ Callback summary: see the « Callbacks » section below.');
     if (document.getElementById('summaries')) document.getElementById('summaries').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
 async function checkHealth() {
   const statusEl = document.getElementById('apiStatus');
+  if (!statusEl) return;
   try {
     const r = await fetch(API + '/health');
-    statusEl.textContent = r.ok ? 'API OK' : 'API erreur';
+    statusEl.textContent = r.ok ? 'API OK' : 'API error';
     statusEl.className = 'api-status ' + (r.ok ? 'ok' : 'err');
   } catch (e) {
-    statusEl.textContent = 'API hors ligne';
+    statusEl.textContent = 'API offline';
     statusEl.className = 'api-status err';
   }
 }
@@ -78,12 +79,13 @@ document.getElementById('intentBtn')?.addEventListener('click', async () => {
   const resultEl = document.getElementById('intentResult');
   const btn = document.getElementById('intentBtn');
   if (!msg) {
-    setResult(resultEl, 'Saisissez un message.', 'error');
+    setResult(resultEl, 'Enter a message.', 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
   setLoading(btn, true);
   setResult(resultEl, '');
+  setNextStep(document.getElementById('intentNextStep'), '');
   try {
     const r = await fetch(API + '/intent', {
       method: 'POST',
@@ -92,16 +94,15 @@ document.getElementById('intentBtn')?.addEventListener('click', async () => {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
-    // Same shape as audio: intent, action, routing_target
     const text = [
-      'Intention : ' + data.intent,
-      'Action : ' + data.action,
-      'Routage : ' + (data.routing_target || 'reception'),
+      'Intent: ' + data.intent,
+      'Action: ' + data.action,
+      'Routing: ' + (data.routing_target || 'reception'),
     ].join('\n');
     setResult(resultEl, text, 'success');
     applyFlowAfterIntent(data, 'intentNextStep', 'slots');
   } catch (e) {
-    setResult(resultEl, 'Erreur : ' + e.message, 'error');
+    setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -112,7 +113,7 @@ document.getElementById('audioFile')?.addEventListener('change', function () {
   const nameEl = document.getElementById('audioFileName');
   if (!nameEl) return;
   const file = this.files?.[0];
-  nameEl.textContent = file ? 'Fichier : ' + file.name : '';
+  nameEl.textContent = file ? 'File: ' + file.name : '';
 });
 
 // --- Audio ---
@@ -123,12 +124,13 @@ document.getElementById('audioBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('audioBtn');
   const file = fileInput?.files?.[0];
   if (!file) {
-    setResult(resultEl, 'Choisissez un fichier audio.', 'error');
+    setResult(resultEl, 'Choose an audio file.', 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
   setLoading(btn, true);
-  setResult(resultEl, 'Transcription en cours…');
+  setResult(resultEl, 'Transcribing…');
+  setNextStep(document.getElementById('audioNextStep'), '');
   try {
     const form = new FormData();
     form.append('file', file);
@@ -139,15 +141,15 @@ document.getElementById('audioBtn')?.addEventListener('click', async () => {
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
     const text = [
-      'Transcription : ' + (data.transcript || '(vide)'),
-      'Intention : ' + data.intent,
-      'Action : ' + data.action,
-      'Routage : ' + data.routing_target,
+      'Transcription: ' + (data.transcript || '(empty)'),
+      'Intent: ' + data.intent,
+      'Action: ' + data.action,
+      'Routing: ' + data.routing_target,
     ].join('\n');
     setResult(resultEl, text, 'success');
     applyFlowAfterIntent(data, 'audioNextStep', 'slots');
   } catch (e) {
-    setResult(resultEl, 'Erreur : ' + e.message, 'error');
+    setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -161,15 +163,15 @@ document.getElementById('slotsBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('slotsBtn');
   btn.dataset.label = btn.textContent;
   setLoading(btn, true);
-  setResult(resultEl, 'Chargement…');
+  setResult(resultEl, 'Loading…');
   try {
     const r = await fetch(API + '/slots?date=' + encodeURIComponent(date));
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
     const lines = (data.slots || []).slice(0, 10).map(s => s.start + ' → ' + s.end);
-    setResult(resultEl, lines.length ? lines.join('\n') : 'Aucun créneau.', 'success');
+    setResult(resultEl, lines.length ? lines.join('\n') : 'No slots.', 'success');
   } catch (e) {
-    setResult(resultEl, 'Erreur: ' + e.message, 'error');
+    setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -184,7 +186,7 @@ document.getElementById('apptBtn')?.addEventListener('click', async () => {
   const resultEl = document.getElementById('apptResult');
   const btn = document.getElementById('apptBtn');
   if (!start || !end || !summary) {
-    setResult(resultEl, 'Remplissez début, fin et objet.', 'error');
+    setResult(resultEl, 'Fill in start, end and subject.', 'error');
     return;
   }
   const startIso = new Date(start).toISOString();
@@ -200,15 +202,15 @@ document.getElementById('apptBtn')?.addEventListener('click', async () => {
         start_iso: startIso,
         end_iso: endIso,
         summary,
-        description: 'APEN – Récupération tenue / agent MVP',
+        description: 'APEN – Uniform collection / agent MVP',
         attendee_email: email,
       }),
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
-    setResult(resultEl, 'RDV créé: ' + (data.htmlLink || data.id || JSON.stringify(data)), 'success');
+    setResult(resultEl, 'Appointment created: ' + (data.htmlLink || data.id || JSON.stringify(data)), 'success');
   } catch (e) {
-    setResult(resultEl, 'Erreur: ' + e.message, 'error');
+    setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -219,7 +221,7 @@ function renderSummaries(list) {
   const container = document.getElementById('summariesList');
   if (!container) return;
   if (!list || list.length === 0) {
-    container.innerHTML = '<p class="card-desc">Aucune synthèse.</p>';
+    container.innerHTML = '<p class="card-desc">No summaries.</p>';
     return;
   }
   container.innerHTML = list
@@ -231,8 +233,8 @@ function renderSummaries(list) {
         <div class="meta">${escapeHtml(s.reason)} · ${s.site} · ${s.urgency} · ${s.status}</div>
       </div>
       <div class="actions">
-        ${s.status === 'pending' ? `<button type="button" class="btn btn-sm btn-secondary" data-action="called">Rappelé</button>` : ''}
-        <button type="button" class="btn btn-sm btn-secondary" data-action="closed">Clôturer</button>
+        ${s.status === 'pending' ? `<button type="button" class="btn btn-sm btn-secondary" data-action="called">Called back</button>` : ''}
+        <button type="button" class="btn btn-sm btn-secondary" data-action="closed">Close</button>
       </div>
     </div>
   `
@@ -254,7 +256,7 @@ function renderSummaries(list) {
         if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
         loadSummaries();
       } catch (e) {
-        alert('Erreur: ' + e.message);
+        alert('Error: ' + e.message);
       }
     });
   });
@@ -275,7 +277,7 @@ async function loadSummaries() {
     renderSummaries(data.summaries || []);
   } catch (e) {
     document.getElementById('summariesList').innerHTML =
-      '<p class="result-box error">Erreur: ' + escapeHtml(e.message) + '</p>';
+      '<p class="result-box error">Error: ' + escapeHtml(e.message) + '</p>';
   }
 }
 
@@ -292,7 +294,7 @@ document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
   const resultEl = document.getElementById('sumAddResult');
   const btn = document.getElementById('sumAddBtn');
   if (!name || !phone || !reason) {
-    setResult(resultEl, 'Nom, téléphone et motif requis.', 'error');
+    setResult(resultEl, 'Name, phone and reason required.', 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
@@ -312,13 +314,70 @@ document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
-    setResult(resultEl, 'Enregistré. ID: ' + data.id, 'success');
+    setResult(resultEl, 'Saved. ID: ' + data.id, 'success');
     document.getElementById('sumName').value = '';
     document.getElementById('sumPhone').value = '';
     document.getElementById('sumReason').value = '';
     loadSummaries();
   } catch (e) {
-    setResult(resultEl, 'Erreur: ' + e.message, 'error');
+    setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+});
+
+// --- Test call taking (simulate POST /voice/process) ---
+document.getElementById('testCallBtn')?.addEventListener('click', async () => {
+  const transcriptEl = document.getElementById('callTranscript');
+  const phoneEl = document.getElementById('callPhone');
+  const resultEl = document.getElementById('testCallResult');
+  const nextEl = document.getElementById('testCallNextStep');
+  const btn = document.getElementById('testCallBtn');
+  const transcript = (transcriptEl?.value || '').trim();
+  if (!transcript) {
+    setResult(resultEl, 'Enter what the caller said.', 'error');
+    return;
+  }
+  btn.dataset.label = btn.textContent;
+  setLoading(btn, true);
+  setResult(resultEl, '');
+  setNextStep(nextEl, '');
+  try {
+    const r = await fetch(API + '/voice/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transcript,
+        caller_phone: (phoneEl?.value || '').trim(),
+        language: getLang(),
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || r.statusText);
+
+    const lines = [
+      'Intent: ' + (data.intent || '—'),
+      'Action: ' + (data.action || '—'),
+      'Routing: ' + (data.routing_target || '—'),
+      'Response: ' + (data.response_type || '—'),
+    ];
+    if (data.transfer_number) {
+      lines.push('Transfer number: ' + data.transfer_number);
+      lines.push('Message: « ' + (data.say_message || '') + ' »');
+    } else {
+      lines.push('Message to say: « ' + (data.say_message || '') + ' »');
+      if (data.response_type === 'callback') {
+        lines.push('');
+        lines.push('→ Callback summary created (see Callbacks section).');
+        if (typeof loadSummaries === 'function') loadSummaries();
+      }
+    }
+    setResult(resultEl, lines.join('\n'), 'success');
+    if (data.response_type === 'callback') {
+      setNextStep(nextEl, 'A summary was saved. Refresh the Callbacks section to see it.');
+    }
+  } catch (e) {
+    setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -327,18 +386,23 @@ document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
 // --- Voice webhook URL (from /config or current origin)
 const webhookEl = document.getElementById('voiceWebhookUrl');
 if (webhookEl) {
+  const url = window.location.origin + '/webhooks/vapi';
+  webhookEl.value = url;
   fetch(API + '/config')
     .then((r) => r.ok ? r.json() : {})
     .then((c) => {
-      webhookEl.textContent = (c.webhook_url || window.location.origin + '/webhooks/vapi');
+      webhookEl.value = (c.webhook_url || url);
     })
     .catch(() => {
-      webhookEl.textContent = window.location.origin + '/webhooks/vapi';
+      webhookEl.value = url;
     });
 }
 document.getElementById('voiceCopyBtn')?.addEventListener('click', () => {
-  const url = document.getElementById('voiceWebhookUrl')?.textContent;
-  if (url && navigator.clipboard) navigator.clipboard.writeText(url).then(() => { alert('URL copiée.'); });
+  const input = document.getElementById('voiceWebhookUrl');
+  const url = input?.value || input?.textContent;
+  if (url && navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => { alert('URL copied.'); });
+  }
 });
 
 // --- Language selector (drives intent/audio; default FR, persisted)
