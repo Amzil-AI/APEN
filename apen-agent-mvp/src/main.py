@@ -30,6 +30,7 @@ from . import voice
 from . import planning
 from . import email_send
 from . import vapi_webhook
+from . import ai_automation
 
 log = logging.getLogger("apen-agent-mvp")
 
@@ -363,6 +364,44 @@ def update_summary_status(summary_id: str, body: StatusUpdate):
     if not s:
         raise HTTPException(404, "Summary not found")
     return s
+
+
+# --- AI automation (e.g. callback → calendar) ---
+
+@app.post("/automation/callback-to-calendar/{summary_id}")
+def automation_callback_to_calendar(summary_id: str):
+    """
+    Use AI to build a calendar event from a callback summary, then create it in the calendar.
+    Picks the first available slot from tomorrow (or today). Requires OPENAI_API_KEY and calendar configured.
+    """
+    s = summary_store.get_summary(summary_id)
+    if not s:
+        raise HTTPException(404, "Summary not found")
+    suggested = ai_automation.suggest_calendar_event_for_callback(s)
+    if not suggested:
+        raise HTTPException(503, "OPENAI_API_KEY not set. AI automation unavailable.")
+    # First try tomorrow, then today
+    now = datetime.utcnow()
+    for days_ahead in (1, 0):
+        day = (now + timedelta(days=days_ahead)).replace(hour=0, minute=0, second=0, microsecond=0)
+        slots = calendar_client.get_available_slots(day)
+        if slots:
+            slot = slots[0]
+            ev = calendar_client.create_appointment(
+                slot["start"],
+                slot["end"],
+                suggested["title"],
+                suggested["description"],
+                attendee_email=None,
+            )
+            if ev and ev.get("id"):
+                return {
+                    "ok": True,
+                    "summary_id": summary_id,
+                    "event": ev,
+                    "message": f"Calendar event created: {suggested['title']}",
+                }
+    raise HTTPException(503, "No free slot found (today or tomorrow). Calendar may be full or not configured.")
 
 
 # --- Call log (Vapi calls → dashboard) ---

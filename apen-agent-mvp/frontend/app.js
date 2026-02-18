@@ -240,6 +240,7 @@ function renderSummaries(list) {
         ${designatedLine ? `<div class="meta designated">${designatedLine}</div>` : ''}
       </div>
       <div class="actions">
+        <button type="button" class="btn btn-sm btn-primary" data-action="add-to-calendar" title="Create calendar event from this callback (AI)">Add to calendar (AI)</button>
         ${s.status === 'pending' ? `<button type="button" class="btn btn-sm btn-secondary" data-action="called">Called back</button>` : ''}
         <button type="button" class="btn btn-sm btn-secondary" data-action="closed">Close</button>
       </div>
@@ -253,13 +254,28 @@ function renderSummaries(list) {
     b.addEventListener('click', async () => {
       const item = b.closest('.summary-item');
       const id = item?.dataset?.id;
-      const status = b.dataset.action;
-      if (!id || !status) return;
+      const action = b.dataset.action;
+      if (!id || !action) return;
+      if (action === 'add-to-calendar') {
+        try {
+          setLoading(b, true);
+          const r = await fetch(API + '/automation/callback-to-calendar/' + encodeURIComponent(id), { method: 'POST' });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(data.detail || data.message || r.statusText);
+          if (typeof loadCalendarEvents === 'function') loadCalendarEvents();
+          alert(data.message || 'Event created: ' + (data.event?.id || ''));
+        } catch (e) {
+          alert('Error: ' + e.message);
+        } finally {
+          setLoading(b, false);
+        }
+        return;
+      }
       try {
         const r = await fetch(API + '/summaries/' + id, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ status: action }),
         });
         if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
         loadSummaries();
