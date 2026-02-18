@@ -5,8 +5,13 @@ Handles: assistant-request (return our greeting + tools), tool-calls (apen_route
 transfer-destination-request (return number we computed for this call).
 Logs each call to the dashboard (call_log).
 Set your Vapi Phone Number or Assistant "Server URL" to: https://your-app.com/webhooks/vapi
+
+Call cutting immediately: Vapi often rejects transient assistants that include inline "functions".
+We return a minimal assistant (no functions) by default so the call stays up. For full routing/booking,
+create an assistant in Vapi with server-side tools and set VAPI_ASSISTANT_ID, or set VAPI_INLINE_TOOLS=1 to try inline.
 """
 import json
+import os
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -69,7 +74,7 @@ def get_apen_book_appointment_tool() -> dict:
 
 
 def handle_assistant_request(call: Optional[dict] = None) -> dict:
-    """Return Vapi assistant config from config/voice.yaml: greeting + tools (apen_route, apen_get_slots, apen_book_appointment)."""
+    """Return Vapi assistant config. Uses VAPI_ASSISTANT_ID if set; else minimal assistant (no inline functions) so the call does not cut."""
     caller_phone = ""
     if call and isinstance(call.get("customer"), dict):
         caller_phone = (call["customer"].get("number") or "") or ""
@@ -77,28 +82,50 @@ def handle_assistant_request(call: Optional[dict] = None) -> dict:
     if call_id:
         call_log.log_call_started(call_id, caller_phone)
 
-    first_message = voice.get_greeting_text()
+    # If you created an assistant in Vapi with server-side tools, return its ID so the call uses it (no inline functions = no drop).
+    assistant_id = os.environ.get("VAPI_ASSISTANT_ID", "").strip()
+    if assistant_id:
+        return {"assistantId": assistant_id}
+
+    first_message = (voice.get_greeting_text() or "").strip().replace("\n", " ").strip() or "Bonjour, vous êtes en contact avec APEN."
     vapi_cfg = get_vapi_config()
-    system_prompt = (vapi_cfg.get("system_prompt") or "").strip() or (
-        "You are APEN's voice agent. "
-        "1) First, when the user states their reason for calling, call apen_route with their message and caller_phone. "
-        "2) If the result says intent is 'appointment' and action is 'book_appointment': call apen_get_slots (with date if they gave one, else tomorrow), then tell the user the available slots and ask which one they want; when they choose, call apen_book_appointment with that slot's start_iso, end_iso, and subject (e.g. Uniform collection). "
-        "3) If the result has transfer_number, use the transferCall tool to transfer and say the say_message. "
-        "4) If only say_message is set (callback), say it to the user and end the call. "
-        "Be brief and professional. Language: French."
-    )
     model_name = (vapi_cfg.get("model") or "gpt-4o-mini").strip()
     voice_provider = (vapi_cfg.get("voice_provider") or "11labs").strip()
     voice_id = (vapi_cfg.get("voice_id") or "rachel").strip()
+
+    # Inline "functions" in transient assistant often cause Vapi to reject and drop the call. We only add them if explicitly enabled.
+    use_inline_tools = os.environ.get("VAPI_INLINE_TOOLS", "").strip().lower() in ("1", "true", "yes")
+
+    if use_inline_tools:
+        system_prompt = (vapi_cfg.get("system_prompt") or "").strip() or (
+            "You are APEN's voice agent. "
+            "1) First, when the user states their reason for calling, call apen_route with their message and caller_phone. "
+            "2) If the result says intent is 'appointment' and action is 'book_appointment': call apen_get_slots, then tell the user the slots and ask which one; when they choose, call apen_book_appointment. "
+            "3) If the result has transfer_number, use the transferCall tool and say the say_message. "
+            "4) If only say_message is set (callback), say it and end the call. Be brief. Language: French."
+        )
+        model_block = {
+            "provider": "openai",
+            "model": model_name,
+            "messages": [{"role": "system", "content": system_prompt}],
+            "functions": [get_apen_route_tool(), get_apen_get_slots_tool(), get_apen_book_appointment_tool()],
+        }
+    else:
+        # Minimal assistant: no functions, so Vapi accepts and the call stays connected.
+        system_prompt = (
+            "You are APEN's voice reception agent. Greet the caller and ask how you can help. "
+            "Tell them their request will be noted and a colleague will call them back. Be brief and professional. Language: French."
+        )
+        model_block = {
+            "provider": "openai",
+            "model": model_name,
+            "messages": [{"role": "system", "content": system_prompt}],
+        }
+
     return {
         "assistant": {
             "firstMessage": first_message,
-            "model": {
-                "provider": "openai",
-                "model": model_name,
-                "messages": [{"role": "system", "content": system_prompt}],
-                "functions": [get_apen_route_tool(), get_apen_get_slots_tool(), get_apen_book_appointment_tool()],
-            },
+            "model": model_block,
             "voice": {"provider": voice_provider, "voiceId": voice_id},
         }
     }
