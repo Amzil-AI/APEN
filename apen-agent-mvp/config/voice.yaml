@@ -1,0 +1,29 @@
+# APEN Agent MVP – Voice copy (fully config-driven, no hardcoded strings)
+# Used by voice.py and vapi_webhook.py
+
+greeting: |
+  Bonjour, vous êtes en contact avec APEN.
+  Dites brièvement le motif de votre appel : rendez-vous, information, urgence, ou autre.
+
+messages:
+  transfer_in_progress: "Je vous transfère. Merci de patienter."
+  unclear: "Je n'ai pas bien compris. Un conseiller vous rappellera. Au revoir."
+
+  # Message said when not transferring (callback) – by intent
+  callback_by_intent:
+    appointment: "Pour la prise de rendez-vous, un conseiller vous rappellera sous peu. Au revoir."
+    callback: "Nous avons bien noté votre demande de rappel. Un conseiller vous rappellera. Au revoir."
+    info: "Un conseiller vous rappellera pour vous donner les informations. Au revoir."
+    default: "Nous avons bien noté votre demande. Un conseiller vous rappellera. Au revoir."
+
+# Vapi assistant (optional overrides)
+vapi:
+  model: "gpt-4o-mini"
+  voice_provider: "11labs"
+  voice_id: "rachel"
+  system_prompt: |
+    You are APEN's voice agent. When the user states their reason for calling,
+    call the apen_route function with their message and caller_phone.
+    When you receive the result: if transfer_number is set, use the transferCall tool to transfer to that number and say the say_message.
+    If only say_message is set, say it to the user and end the call.
+    Be brief and professional. Language: French.

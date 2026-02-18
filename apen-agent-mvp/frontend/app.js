@@ -1,9 +1,10 @@
 /**
  * APEN Agent MVP – Frontend
- * All API base URL is same origin (relative).
+ * Language selector drives intent/audio language; flow shows next-step and auto-scrolls.
  */
 
 const API = '';
+const LANG_KEY = 'apen-lang';
 
 function setResult(el, content, type = '') {
   if (!el) return;
@@ -12,10 +13,50 @@ function setResult(el, content, type = '') {
   el.style.display = content ? 'block' : 'none';
 }
 
+function setNextStep(el, content) {
+  if (!el) return;
+  el.textContent = content || '';
+  el.style.display = content ? 'block' : 'none';
+}
+
 function setLoading(btn, loading) {
   if (!btn) return;
   btn.disabled = loading;
   btn.textContent = loading ? '…' : btn.dataset.label || 'Envoyer';
+}
+
+function getLang() {
+  return localStorage.getItem(LANG_KEY) || 'fr';
+}
+
+function setLang(lang) {
+  localStorage.setItem(LANG_KEY, lang);
+  const select = document.getElementById('langSelect');
+  const intentLang = document.getElementById('intentLang');
+  const audioLang = document.getElementById('audioLang');
+  if (select) select.value = lang;
+  if (intentLang) intentLang.value = lang;
+  if (audioLang) audioLang.value = lang;
+}
+
+function applyFlowAfterIntent(data, nextStepElId, scrollTargetId) {
+  const action = (data && data.action) || '';
+  const routing = (data && data.routing_target) || '';
+  const nextEl = document.getElementById(nextStepElId);
+  const scrollEl = scrollTargetId ? document.getElementById(scrollTargetId) : null;
+
+  if (!nextEl) return;
+  setNextStep(nextEl, '');
+
+  if (action === 'book_appointment' && routing === 'in_agent') {
+    setNextStep(nextEl, '→ Proposez des créneaux dans la section « Créneaux disponibles » ci-dessous.');
+    if (scrollEl) scrollEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (action === 'provide_info' && routing === 'in_agent') {
+    setNextStep(nextEl, '→ Donnez les infos demandées (horaires, adresse) ou enregistrez un rappel dans « Rappels ».');
+  } else if (action === 'collect_summary' || routing === 'reception') {
+    setNextStep(nextEl, '→ Synthèse rappel : consultez la section « Rappels » ci-dessous.');
+    if (document.getElementById('summaries')) document.getElementById('summaries').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 async function checkHealth() {
@@ -53,13 +94,14 @@ document.getElementById('intentBtn')?.addEventListener('click', async () => {
     if (!r.ok) throw new Error(data.detail || r.statusText);
     // Same shape as audio: intent, action, routing_target
     const text = [
-      'Intent: ' + data.intent,
-      'Action: ' + data.action,
-      'Routage: ' + (data.routing_target || 'reception'),
+      'Intention : ' + data.intent,
+      'Action : ' + data.action,
+      'Routage : ' + (data.routing_target || 'reception'),
     ].join('\n');
     setResult(resultEl, text, 'success');
+    applyFlowAfterIntent(data, 'intentNextStep', 'slots');
   } catch (e) {
-    setResult(resultEl, 'Erreur: ' + e.message, 'error');
+    setResult(resultEl, 'Erreur : ' + e.message, 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -97,14 +139,15 @@ document.getElementById('audioBtn')?.addEventListener('click', async () => {
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
     const text = [
-      'Transcription: ' + (data.transcript || '(vide)'),
-      'Intent: ' + data.intent,
-      'Action: ' + data.action,
-      'Routage: ' + data.routing_target,
+      'Transcription : ' + (data.transcript || '(vide)'),
+      'Intention : ' + data.intent,
+      'Action : ' + data.action,
+      'Routage : ' + data.routing_target,
     ].join('\n');
     setResult(resultEl, text, 'success');
+    applyFlowAfterIntent(data, 'audioNextStep', 'slots');
   } catch (e) {
-    setResult(resultEl, 'Erreur: ' + e.message, 'error');
+    setResult(resultEl, 'Erreur : ' + e.message, 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -296,6 +339,26 @@ if (webhookEl) {
 document.getElementById('voiceCopyBtn')?.addEventListener('click', () => {
   const url = document.getElementById('voiceWebhookUrl')?.textContent;
   if (url && navigator.clipboard) navigator.clipboard.writeText(url).then(() => { alert('URL copiée.'); });
+});
+
+// --- Language selector (drives intent/audio; default FR, persisted)
+setLang(getLang());
+document.getElementById('langSelect')?.addEventListener('change', function () {
+  setLang(this.value);
+});
+document.getElementById('intentLang')?.addEventListener('change', function () {
+  localStorage.setItem(LANG_KEY, this.value);
+  const langSelect = document.getElementById('langSelect');
+  if (langSelect) langSelect.value = this.value;
+  const audioLang = document.getElementById('audioLang');
+  if (audioLang) audioLang.value = this.value;
+});
+document.getElementById('audioLang')?.addEventListener('change', function () {
+  localStorage.setItem(LANG_KEY, this.value);
+  const langSelect = document.getElementById('langSelect');
+  if (langSelect) langSelect.value = this.value;
+  const intentLang = document.getElementById('intentLang');
+  if (intentLang) intentLang.value = this.value;
 });
 
 // Init: health + load summaries + set default date

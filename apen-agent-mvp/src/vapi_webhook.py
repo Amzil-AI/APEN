@@ -1,5 +1,6 @@
 """
 Vapi webhook adapter – we become the "brain" for voice calls (build Limova and more).
+Fully config-driven: greeting and system prompt from config/voice.yaml.
 Handles: assistant-request (return our greeting + apen_route tool), tool-calls (apen_route → our voice.process_speech),
 transfer-destination-request (return number we computed for this call).
 Set your Vapi Phone Number or Assistant "Server URL" to: https://your-app.com/webhooks/vapi
@@ -7,6 +8,7 @@ Set your Vapi Phone Number or Assistant "Server URL" to: https://your-app.com/we
 from typing import Any, Optional
 
 from . import voice
+from .config_loader import get_vapi_config
 
 # In-memory: call_id -> last apen_route result (so we can return destination on transfer-destination-request)
 _pending_transfer: dict[str, dict] = {}
@@ -29,32 +31,31 @@ def get_apen_route_tool() -> dict:
 
 
 def handle_assistant_request(call: Optional[dict] = None) -> dict:
-    """Return Vapi assistant config: our greeting + apen_route tool."""
+    """Return Vapi assistant config from config/voice.yaml: greeting + apen_route tool."""
     caller_phone = ""
     if call and isinstance(call.get("customer"), dict):
         caller_phone = (call["customer"].get("number") or "") or ""
     first_message = voice.get_greeting_text()
+    vapi_cfg = get_vapi_config()
+    system_prompt = (vapi_cfg.get("system_prompt") or "").strip() or (
+        "You are APEN's voice agent. When the user states their reason for calling, "
+        "call the apen_route function with their message and caller_phone. "
+        "When you receive the result: if transfer_number is set, use the transferCall tool to transfer to that number and say the say_message. "
+        "If only say_message is set, say it to the user and end the call. Be brief and professional. Language: French."
+    )
+    model_name = (vapi_cfg.get("model") or "gpt-4o-mini").strip()
+    voice_provider = (vapi_cfg.get("voice_provider") or "11labs").strip()
+    voice_id = (vapi_cfg.get("voice_id") or "rachel").strip()
     return {
         "assistant": {
             "firstMessage": first_message,
             "model": {
                 "provider": "openai",
-                "model": "gpt-4o-mini",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are APEN's voice agent. When the user states their reason for calling, "
-                            "call the apen_route function with their message and caller_phone. "
-                            "When you receive the result: if transfer_number is set, use the transferCall tool to transfer to that number and say the say_message. "
-                            "If only say_message is set, say it to the user and end the call. "
-                            "Be brief and professional. Language: French."
-                        ),
-                    }
-                ],
+                "model": model_name,
+                "messages": [{"role": "system", "content": system_prompt}],
                 "functions": [get_apen_route_tool()],
             },
-            "voice": {"provider": "11labs", "voiceId": "rachel"},
+            "voice": {"provider": voice_provider, "voiceId": voice_id},
         }
     }
 

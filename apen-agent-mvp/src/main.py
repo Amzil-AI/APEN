@@ -1,11 +1,13 @@
 """
 APEN Agent MVP – FastAPI app.
 Endpoints for intent detection, calendar slots, appointment creation, and callback summaries.
-Can be used by Limova webhooks or by a custom frontend/CLI for the PoC.
+Fully config-driven; startup automates storage init and config validation.
 """
+from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
+import logging
 
 # Load .env from project root (apen-agent-mvp/)
 _env_path = Path(__file__).resolve().parent.parent / ".env"
@@ -21,17 +23,48 @@ import tempfile
 import os
 
 from . import intent, calendar_client, summary_store
-from .config_loader import get_routing_rules, get_routing_target
+from .config_loader import get_routing_rules, get_routing_target, get_intents
 from . import transcribe
 from . import voice
 from . import planning
 from . import email_send
 from . import vapi_webhook
 
+log = logging.getLogger("apen-agent-mvp")
+
+
+def _startup():
+    """Automated startup: ensure storage, validate config, log env status."""
+    summary_store.ensure_storage()
+    planning.ensure_storage()
+    intents_data = get_intents()
+    intent_ids = list((intents_data.get("intents") or {}).keys())
+    routing_data = get_routing_rules()
+    by_intent = (routing_data.get("routing") or {}).get("by_intent") or {}
+    for iid in intent_ids:
+        if (by_intent.get(iid) or {}).get("target") is None:
+            log.warning("Config: intent %s has no routing target in routing_rules.yaml", iid)
+    has_openai = bool(os.environ.get("OPENAI_API_KEY"))
+    has_google = bool(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")) and os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", ""))
+    has_base = bool(os.environ.get("BASE_URL"))
+    log.info(
+        "Startup: storage ready | OpenAI=%s | Google Calendar=%s | BASE_URL=%s",
+        has_openai, has_google, has_base,
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _startup()
+    yield
+    # shutdown if needed later
+
+
 app = FastAPI(
     title="APEN Agent MVP API",
     description="Backend for AI conversational agent: intent, calendar, callback summaries.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 app.add_middleware(
     CORSMiddleware,

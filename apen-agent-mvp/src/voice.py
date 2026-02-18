@@ -1,23 +1,27 @@
 """
-Voice layer – provider-agnostic (no Twilio).
+Voice layer – provider-agnostic (no Twilio). Fully config-driven from config/voice.yaml.
 Any voice platform (Vapi, Bland, SIP gateway, etc.) can call our API with transcript + caller;
 we return intent, routing, transfer number or message to say, and we create callback summaries when needed.
 """
 from typing import Optional
 
 from . import intent
-from .config_loader import get_routing_rules, get_routing_target
+from .config_loader import (
+    get_routing_rules,
+    get_routing_target,
+    get_greeting as _cfg_greeting,
+    get_transfer_message as _cfg_transfer_msg,
+    get_unclear_message as _cfg_unclear_msg,
+    get_callback_message as _cfg_callback_msg,
+)
 from . import summary_store
 
 DEFAULT_SITE = "paris"
 
 
 def get_greeting_text() -> str:
-    """Greeting for the start of the call (any provider can use this for TTS)."""
-    return (
-        "Bonjour, vous êtes en contact avec APEN. "
-        "Dites brièvement le motif de votre appel : rendez-vous, information, urgence, ou autre."
-    )
+    """Greeting for the start of the call (from config/voice.yaml)."""
+    return _cfg_greeting()
 
 
 def get_transfer_number(intent_id: str, site: Optional[str] = None) -> Optional[str]:
@@ -36,12 +40,8 @@ def get_transfer_number(intent_id: str, site: Optional[str] = None) -> Optional[
 
 
 def _say_message_for_intent(intent_id: str) -> str:
-    """French message to say when not transferring (callback)."""
-    if intent_id == "appointment":
-        return "Pour la prise de rendez-vous, un conseiller vous rappellera sous peu. Au revoir."
-    if intent_id == "info":
-        return "Un conseiller vous rappellera pour vous donner les informations. Au revoir."
-    return "Nous avons bien noté votre demande. Un conseiller vous rappellera. Au revoir."
+    """Message to say when not transferring (from config/voice.yaml)."""
+    return _cfg_callback_msg(intent_id)
 
 
 def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] = None) -> dict:
@@ -62,7 +62,7 @@ def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] 
             "routing_target": "reception",
             "response_type": "callback",
             "transfer_number": None,
-            "say_message": "Je n'ai pas bien compris. Un conseiller vous rappellera. Au revoir.",
+            "say_message": _cfg_unclear_msg(),
         }
 
     intent_id = intent.detect_intent(transcript, "fr")
@@ -77,7 +77,7 @@ def process_speech(transcript: str, caller_phone: str = "", site: Optional[str] 
             "routing_target": target,
             "response_type": "transfer",
             "transfer_number": transfer_number,
-            "say_message": "Je vous transfère. Merci de patienter.",
+            "say_message": _cfg_transfer_msg(),
         }
 
     # No transfer: store summary and return message to say

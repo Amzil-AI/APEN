@@ -14,6 +14,11 @@ def _ensure_dir():
     PLANNING_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def ensure_storage():
+    """Ensure planning directory exists (call at startup)."""
+    _ensure_dir()
+
+
 def save_planning(file_content: bytes, filename: str) -> dict:
     """Save uploaded planning file; return id and path."""
     _ensure_dir()

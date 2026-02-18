@@ -6,6 +6,9 @@ routing:
     appointment:
       target: in_agent
       message: "Je peux prendre votre rendez-vous (ex. récupération de tenue)."
+    callback:
+      target: reception
+      message: "Je note vos coordonnées pour un rappel."
     info:
       target: in_agent
       message: "Je peux vous renseigner (horaires, adresse)."

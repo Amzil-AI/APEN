@@ -22,6 +22,11 @@
         <a href="#summaries" class="nav-link">Rappels</a>
         <a href="#voice" class="nav-link">Voice</a>
       </nav>
+      <label class="lang-label" for="langSelect">Langue</label>
+      <select id="langSelect" class="input lang-select" aria-label="Langue pour la détection d’intention">
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+      </select>
       <div class="api-status" id="apiStatus">—</div>
     </div>
   </header>
@@ -41,7 +46,7 @@
         <li><strong>Prendre l’appel</strong> — Réception 24/7 (Vapi ou autre).</li>
         <li><strong>Accueillir</strong> — Dire l’accroche (<code>GET /voice/prompt</code>).</li>
         <li><strong>Récupérer la demande</strong> — Parole → texte (STT) → transcript envoyé à l’API.</li>
-        <li><strong>Vérifier l’intention</strong> — RDV, info, urgence, SAV, partenaire, autre (<code>intents.yaml</code>).</li>
+        <li><strong>Vérifier l’intention</strong> — RDV, rappel, info, urgence, SAV, partenaire, autre (<code>intents.yaml</code>).</li>
         <li><strong>Décider l’action</strong> — book_appointment, transfer, ou collect_summary.</li>
         <li><strong>Agir</strong> — Proposer créneaux + créer RDV · ou transférer vers le bon numéro · ou enregistrer une synthèse rappel.</li>
       </ol>
@@ -49,42 +54,44 @@
     </section>
     <!-- Intent -->
     <section id="intent" class="card">
-      <h2>Test intent (texte)</h2>
-      <p class="card-desc">Saisissez une phrase comme un appelant : détection d’intention et action.</p>
+      <h2>Détection d’intention (texte)</h2>
+      <p class="card-desc">Saisissez une phrase comme un appelant : le moteur détecte l’intention (RDV, rappel, info, urgence, SAV, partenaire) et l’action.</p>
       <div class="form-row">
         <input type="text" id="intentMessage" placeholder="Ex: Je voudrais un rendez-vous pour récupérer ma tenue" class="input input-wide">
-        <select id="intentLang" class="input">
+        <select id="intentLang" class="input" aria-label="Langue du message">
           <option value="fr">FR</option>
           <option value="en">EN</option>
         </select>
-        <button type="button" id="intentBtn" class="btn btn-primary">Détecter</button>
+        <button type="button" id="intentBtn" class="btn btn-primary">Détecter l’intention</button>
       </div>
+      <div id="intentNextStep" class="next-step" aria-live="polite"></div>
       <div id="intentResult" class="result-box" aria-live="polite"></div>
     </section>
 
     <!-- Audio -->
     <section id="audio" class="card">
-      <h2>Test audio (Whisper + intent)</h2>
-      <p class="card-desc">Envoyez un fichier audio (ex. enregistrement d’appel) : transcription Whisper puis intention et routage — comme en démo avec un vrai fichier.</p>
+      <h2>Test audio (Whisper + intention)</h2>
+      <p class="card-desc">Envoyez un fichier audio (ex. enregistrement d’appel) : transcription puis détection d’intention et routage.</p>
       <div class="form-row">
         <input type="file" id="audioFile" accept=".mp3,.wav,.m4a,.webm,.ogg,.flac" class="input-file">
         <span id="audioFileName" class="audio-file-name" aria-live="polite"></span>
-        <select id="audioLang" class="input">
+        <select id="audioLang" class="input" aria-label="Langue de l’audio">
           <option value="fr">FR</option>
           <option value="en">EN</option>
         </select>
-        <button type="button" id="audioBtn" class="btn btn-primary">Transcrire & intent</button>
+        <button type="button" id="audioBtn" class="btn btn-primary">Transcrire et détecter</button>
       </div>
+      <div id="audioNextStep" class="next-step" aria-live="polite"></div>
       <div id="audioResult" class="result-box" aria-live="polite"></div>
     </section>
 
     <!-- Slots -->
     <section id="slots" class="card">
       <h2>Créneaux disponibles</h2>
-      <p class="card-desc">Choisir une date pour afficher les créneaux (agenda).</p>
+      <p class="card-desc">Choisissez une date pour afficher les créneaux proposés par l’agenda.</p>
       <div class="form-row">
         <input type="date" id="slotsDate" class="input">
-        <button type="button" id="slotsBtn" class="btn btn-primary">Charger</button>
+        <button type="button" id="slotsBtn" class="btn btn-primary">Charger les créneaux</button>
       </div>
       <div id="slotsResult" class="result-box" aria-live="polite"></div>
     </section>
@@ -92,7 +99,7 @@
     <!-- Create appointment -->
     <section id="appointments" class="card">
       <h2>Créer un rendez-vous</h2>
-      <p class="card-desc">Enregistrement d’un RDV dans l’agenda (ex. récupération de tenue).</p>
+      <p class="card-desc">Enregistrez un RDV dans l’agenda (ex. récupération de tenue).</p>
       <div class="form-grid">
         <label>Début (date/heure)</label>
         <input type="datetime-local" id="apptStart" class="input">
@@ -104,15 +111,15 @@
         <input type="email" id="apptEmail" placeholder="email@exemple.fr" class="input">
       </div>
       <div class="form-row">
-        <button type="button" id="apptBtn" class="btn btn-primary">Créer le RDV</button>
+        <button type="button" id="apptBtn" class="btn btn-primary">Enregistrer le RDV</button>
       </div>
       <div id="apptResult" class="result-box" aria-live="polite"></div>
     </section>
 
     <!-- Callback summaries -->
     <section id="summaries" class="card">
-      <h2>Rappels (callback)</h2>
-      <p class="card-desc">Liste des synthèses en attente de rappel ; ajout manuel ou via agent.</p>
+      <h2>Rappels (synthèses callback)</h2>
+      <p class="card-desc">Liste des demandes en attente de rappel ; ajout manuel ou créé automatiquement par l’agent.</p>
       <div class="form-row">
         <select id="summariesFilter" class="input">
           <option value="">Tous</option>
@@ -153,18 +160,18 @@
       <div id="sumAddResult" class="result-box" aria-live="polite"></div>
     </section>
 
-    <!-- Voice / Integration (build Limova and more) -->
+    <!-- Voice / Integration -->
     <section id="voice" class="card">
-      <h2>Voice – Intégration (on construit Limova et plus)</h2>
-      <p class="card-desc">Utilisez notre API comme « cerveau » des appels. Avec Vapi : définissez l’URL serveur ci-dessous. Pas de Twilio, pas de Limova.</p>
+      <h2>Intégration Voice (Vapi)</h2>
+      <p class="card-desc">Utilisez cette URL comme « Server URL » dans Vapi pour que l’API pilote les appels (accueil, intention, transfert, rappel).</p>
       <div class="form-row">
-        <label class="input-wide" style="color: var(--text-muted); font-size: 0.9rem;">Server URL (Vapi) :</label>
+        <label class="input-wide" style="color: var(--text-muted); font-size: 0.9rem;">URL webhook Vapi :</label>
       </div>
       <div class="form-row">
         <code id="voiceWebhookUrl" class="input input-wide" style="font-family: var(--font-mono); font-size: 0.85rem;"></code>
-        <button type="button" id="voiceCopyBtn" class="btn btn-secondary">Copier</button>
+        <button type="button" id="voiceCopyBtn" class="btn btn-secondary">Copier l’URL</button>
       </div>
-      <p class="card-desc" style="margin-top: 0.5rem;">Voir <a href="/docs" target="_blank" rel="noopener">API Docs</a> pour <code>GET /voice/prompt</code>, <code>POST /voice/process</code>, <code>POST /webhooks/vapi</code>.</p>
+      <p class="card-desc" style="margin-top: 0.5rem;"><a href="/docs" target="_blank" rel="noopener">Documentation API</a> : <code>GET /voice/prompt</code>, <code>POST /voice/process</code>, <code>POST /webhooks/vapi</code>.</p>
     </section>
   </main>
 

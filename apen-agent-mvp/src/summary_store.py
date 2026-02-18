@@ -16,6 +16,11 @@ def _ensure_data_dir():
     STORAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
+def ensure_storage():
+    """Ensure data directory exists (call at startup)."""
+    _ensure_data_dir()
+
+
 def _load():
     global _summaries
     if _summaries:

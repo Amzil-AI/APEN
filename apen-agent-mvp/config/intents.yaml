@@ -1,22 +1,32 @@
 # APEN Agent MVP – Intent definitions for call qualification
-# Used by the agent to route: appointment, info, emergency, after_sales, partner, other
+# Order matters: first match wins. callback before info so "rappeler" → callback.
+# Intents: appointment, callback, info, emergency, after_sales, partner, other
 
 intents:
   appointment:
     id: appointment
     name: "Prise de rendez-vous / Appointment booking"
     description: "Caller wants to book a slot (e.g. uniform collection, visit)"
-    keywords_fr: ["rendez-vous", "rdv", "réserver", "créneau", "tenue", "récupérer tenue", "passer"]
-    keywords_en: ["appointment", "book", "schedule", "slot", "uniform", "pick up"]
+    keywords_fr: ["rendez-vous", "rdv", "réserver", "créneau", "tenue", "récupérer tenue", "passer", "prendre rdv"]
+    keywords_en: ["appointment", "book", "schedule", "slot", "uniform", "pick up", "booking"]
     action: book_appointment
-    transfer_default: null  # handle in-agent
+    transfer_default: null
+
+  callback:
+    id: callback
+    name: "Rappel / Call back"
+    description: "Caller asks to be called back or leave a message for callback"
+    keywords_fr: ["rappel", "rappeler", "être rappelé", "rappelez-moi", "recontact", "recontacter", "rappelez moi", "me rappeler"]
+    keywords_en: ["call back", "callback", "call me back", "ring back", "call back please", "get back"]
+    action: collect_summary
+    transfer_default: reception
 
   info:
     id: info
     name: "Demande d'information / Information request"
     description: "Caller asks for hours, address, general info"
-    keywords_fr: ["horaires", "heures", "adresse", "ouvert", "fermé", "info", "renseignement", "rappeler", "rappel"]
-    keywords_en: ["hours", "address", "open", "closed", "information"]
+    keywords_fr: ["horaires", "heures", "adresse", "ouvert", "fermé", "info", "renseignement", "où", "quand", "comment"]
+    keywords_en: ["hours", "address", "open", "closed", "information", "where", "when", "how"]
     action: provide_info
     transfer_default: null
 
