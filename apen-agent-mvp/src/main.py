@@ -21,6 +21,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel, Field
 import tempfile
 import os
+import uuid
 
 from . import intent, calendar_client, summary_store, call_log
 from .config_loader import get_routing_rules, get_routing_target, get_intents
@@ -396,8 +397,27 @@ def voice_process(body: VoiceProcessRequest):
     Process caller speech. Any voice platform (Vapi, Bland, SIP, etc.) POSTs transcript + caller_phone.
     Returns: intent, action, routing_target, response_type (transfer | callback),
     transfer_number (if transfer), say_message (if callback). Creates callback summary when not transferring.
+    For test calls (e.g. from the dashboard tester), also logs a synthetic call and runs post-call automation:
+    call appears in Calls with ended_at and full_transcript; callback summary notes get the transcript.
     """
-    return voice.process_speech(body.transcript, body.caller_phone, body.site, body.language)
+    call_id = "test-" + str(uuid.uuid4())[:8]
+    call_log.log_call_started(call_id, body.caller_phone or "")
+    result = voice.process_speech(body.transcript, body.caller_phone, body.site, body.language)
+    outcome = "transfer" if result.get("response_type") == "transfer" else "callback"
+    call_log.log_route_result(
+        call_id,
+        transcript=(body.transcript or "").strip(),
+        intent=result.get("intent") or "other",
+        action=result.get("action") or "",
+        outcome=outcome,
+        summary_id=result.get("summary_id"),
+    )
+    call_log.call_ended(call_id, full_transcript=(body.transcript or "").strip())
+    c = call_log.get_call(call_id)
+    if c and c.get("summary_id") and (body.transcript or "").strip():
+        summary_store.update_notes(c["summary_id"], (body.transcript or "").strip(), append=True)
+    result["call_id"] = call_id
+    return result
 
 
 # --- Vapi webhook (build Limova and more: our brain + Vapi for the phone) ---

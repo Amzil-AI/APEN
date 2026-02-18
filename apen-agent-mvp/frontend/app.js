@@ -435,6 +435,7 @@ document.getElementById('testCallBtn')?.addEventListener('click', async () => {
       }
     }
     setResult(resultEl, lines.join('\n'), 'success');
+    if (typeof loadCalls === 'function') loadCalls();
     if (data.response_type === 'callback') {
       setNextStep(nextEl, 'A summary was saved. Refresh the Callbacks section to see it.');
     }
