@@ -211,9 +211,11 @@ def handle_transfer_destination_request(call: Optional[dict] = None) -> Optional
 def handle_vapi_message(body: dict) -> Optional[dict]:
     """
     Dispatch Vapi webhook body. Returns response dict for assistant-request, tool-calls; None for others.
+    Accepts both shapes: body.message.type or body.type (Vapi can send either).
     """
-    msg = body.get("message") or {}
-    typ = msg.get("type")
+    msg = body.get("message") if "message" in body else body
+    msg = msg or {}
+    typ = msg.get("type") or body.get("type")
     call = msg.get("call") or body.get("call")
 
     if typ == "assistant-request":

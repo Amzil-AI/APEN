@@ -355,17 +355,40 @@ def voice_process(body: VoiceProcessRequest):
 
 # --- Vapi webhook (build Limova and more: our brain + Vapi for the phone) ---
 
-@app.post("/webhooks/vapi")
-def webhook_vapi(body: dict):
-    """
-    Vapi Server URL. Handles assistant-request (our greeting + apen_route tool),
-    tool-calls (apen_route → our routing), transfer-destination-request (return number).
-    Set in Vapi: Server URL = https://your-app.com/webhooks/vapi
-    """
+def _webhook_vapi_get():
+    return {"message": "APEN webhook OK. Use POST for assistant-request, tool-calls, transfer-destination-request."}
+
+
+def _webhook_vapi_post(body: dict):
     response = vapi_webhook.handle_vapi_message(body)
     if response is not None:
         return response
     return {}
+
+
+@app.get("/webhooks/vapi")
+@app.get("/webhooks/vapi/")
+def webhook_vapi_get():
+    """GET so you can verify the URL is reachable (e.g. in browser)."""
+    return _webhook_vapi_get()
+
+
+@app.options("/webhooks/vapi")
+@app.options("/webhooks/vapi/")
+def webhook_vapi_options():
+    """CORS preflight."""
+    return {}
+
+
+@app.post("/webhooks/vapi")
+@app.post("/webhooks/vapi/")
+def webhook_vapi_post(body: dict):
+    """
+    Vapi Server URL. Handles assistant-request (our greeting + tools),
+    tool-calls (apen_route, apen_get_slots, apen_book_appointment), transfer-destination-request (return number).
+    Set in Vapi: Server URL = https://your-app.com/webhooks/vapi (no trailing slash recommended).
+    """
+    return _webhook_vapi_post(body)
 
 
 # --- Planning (publish/send – beyond Limova) ---

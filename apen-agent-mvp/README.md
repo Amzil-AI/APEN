@@ -89,7 +89,7 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 2. **Build command:** `pip install -r requirements.txt`
 3. **Start command:** `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
 4. **Environment:** Set `BASE_URL` to your public URL (e.g. `https://your-app.onrender.com`) so the app and Vapi webhook URL are correct. Optionally: `OPENAI_API_KEY`, `GOOGLE_CALENDAR_ID`, `GOOGLE_APPLICATION_CREDENTIALS` (path to secret file).
-5. **Vapi:** In Vapi dashboard set Server URL to `https://your-app.onrender.com/webhooks/vapi`.
+5. **Vapi:** In Vapi dashboard set Server URL to `https://your-app.onrender.com/webhooks/vapi`. If calls don’t work, see [docs/VAPI-TROUBLESHOOTING.md](docs/VAPI-TROUBLESHOOTING.md).
 
 A `render.yaml` at repo root is available for Blueprint deploy.
 
