@@ -447,6 +447,19 @@ document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
   }
 });
 
+// --- Simulated input type: text vs recording ---
+document.getElementById('simInputType')?.addEventListener('change', function () {
+  const isText = this.value === 'text';
+  const textRow = document.getElementById('simTextRow');
+  const recRow = document.getElementById('simRecordingRow');
+  if (textRow) textRow.style.display = isText ? '' : 'none';
+  if (recRow) recRow.style.display = isText ? 'none' : '';
+});
+document.getElementById('callRecordingFile')?.addEventListener('change', function () {
+  const span = document.getElementById('callRecordingFileName');
+  if (span) span.textContent = this.files?.length ? this.files[0].name : 'no file selected';
+});
+
 // --- Test call taking (simulate POST /voice/process) ---
 document.getElementById('testCallBtn')?.addEventListener('click', async () => {
   const transcriptEl = document.getElementById('callTranscript');
@@ -510,6 +523,77 @@ document.getElementById('testCallBtn')?.addEventListener('click', async () => {
   }
 });
 
+// --- Test call with recording: transcribe → intent → then full flow (voice/process) ---
+document.getElementById('testCallBtnRecording')?.addEventListener('click', async () => {
+  const fileInput = document.getElementById('callRecordingFile');
+  const phoneEl = document.getElementById('callPhone');
+  const resultEl = document.getElementById('testCallResult');
+  const nextEl = document.getElementById('testCallNextStep');
+  const btn = document.getElementById('testCallBtnRecording');
+  const lang = document.getElementById('callRecordingLang')?.value || 'fr';
+  const file = fileInput?.files?.[0];
+  if (!file) {
+    setResult(resultEl, 'Choose a call recording file first.', 'error');
+    return;
+  }
+  btn.dataset.label = btn.textContent;
+  setLoading(btn, true);
+  setResult(resultEl, 'Transcribing…');
+  setNextStep(nextEl, '');
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    const r1 = await fetch(API + '/audio/intent?language=' + encodeURIComponent(lang), {
+      method: 'POST',
+      body: form,
+    });
+    const data1 = await r1.json();
+    if (!r1.ok) throw new Error(data1.detail || r1.statusText);
+    const transcript = (data1.transcript || '').trim();
+    if (!transcript) {
+      setResult(resultEl, 'No speech detected in the recording.', 'error');
+      setLoading(btn, false);
+      return;
+    }
+    setResult(resultEl, 'Running flow (callback/appointment)…');
+    const r2 = await fetch(API + '/voice/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transcript,
+        caller_phone: (phoneEl?.value || '').trim(),
+        language: lang,
+      }),
+    });
+    const data = await r2.json();
+    if (!r2.ok) throw new Error(data.detail || r2.statusText);
+    const lines = [
+      'Transcript: ' + transcript.slice(0, 100) + (transcript.length > 100 ? '…' : ''),
+      'Intent: ' + (data.intent || '—'),
+      'Action: ' + (data.action || '—'),
+      'Response: ' + (data.response_type || '—'),
+    ];
+    if (data.say_message) lines.push('Message: « ' + (data.say_message || '') + ' »');
+    if (data.response_type === 'appointment_booked' && data.appointment_id) {
+      lines.push('', '→ Appointment created (see Calendar and Calls).');
+    } else if (data.response_type === 'callback') {
+      lines.push('', '→ Callback summary created (see Callbacks).');
+      if (typeof loadSummaries === 'function') loadSummaries();
+    }
+    setResult(resultEl, lines.join('\n'), 'success');
+    if (typeof loadCalls === 'function') loadCalls();
+    if (data.response_type === 'appointment_booked') {
+      setNextStep(nextEl, 'An appointment was created. Check the Calendar section and Calls.');
+    } else if (data.response_type === 'callback') {
+      setNextStep(nextEl, 'A summary was saved. See Callbacks.');
+    }
+  } catch (e) {
+    setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+});
+
 // --- Voice webhook URL (from /config or current origin)
 const webhookEl = document.getElementById('voiceWebhookUrl');
 if (webhookEl) {
@@ -551,6 +635,17 @@ document.getElementById('audioLang')?.addEventListener('change', function () {
   const intentLang = document.getElementById('intentLang');
   if (intentLang) intentLang.value = this.value;
 });
+
+// Open dropdown when navigating to #details-*
+function openDetailsFromHash() {
+  const hash = (window.location.hash || '').replace('#', '');
+  if (hash === 'details-intent-audio' || hash === 'details-pipeline') {
+    const el = document.getElementById(hash);
+    if (el && el.tagName === 'DETAILS') el.setAttribute('open', '');
+  }
+}
+window.addEventListener('hashchange', openDetailsFromHash);
+openDetailsFromHash();
 
 // Init: health + load summaries + calls + calendar events + set default date
 checkHealth();

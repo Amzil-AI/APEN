@@ -14,13 +14,12 @@
     <div class="header-inner">
       <h1 class="logo">APEN <span class="logo-sub">Agent MVP</span></h1>
       <nav class="nav">
+        <a href="#details-intent-audio" class="nav-link">Intent & Audio</a>
+        <a href="#details-pipeline" class="nav-link">What happens next</a>
         <a href="#test-call" class="nav-link">Test call</a>
-        <a href="#pipeline" class="nav-link">Pipeline</a>
         <a href="#calls" class="nav-link">Calls</a>
         <a href="#summaries" class="nav-link">Callbacks</a>
         <a href="#calendar" class="nav-link">Calendar</a>
-        <a href="#intent" class="nav-link">Intent</a>
-        <a href="#audio" class="nav-link">Audio</a>
         <a href="#voice" class="nav-link">Voice</a>
       </nav>
       <div class="header-right">
@@ -43,16 +42,89 @@
       <p class="hero-desc">Intent engine and APIs for calendar, callbacks and voice. Connect your phone system (e.g. Vapi) to this API for live calls.</p>
     </section>
 
+    <!-- Top dropdown: Intent & Audio tests -->
+    <section class="card dropdown-section">
+      <details class="dropdown-details" id="details-intent-audio">
+        <summary class="dropdown-summary">Intent & Audio tests</summary>
+        <div class="dropdown-inner">
+          <div id="intent" class="card-inner">
+            <h3>Intent detection (text)</h3>
+            <p class="card-desc">Enter a phrase as a caller would: the engine detects intent and action.</p>
+            <div class="form-row">
+              <input type="text" id="intentMessage" placeholder="e.g. I'd like an appointment to pick up my uniform" class="input input-wide">
+              <select id="intentLang" class="input" aria-label="Message language">
+                <option value="fr">FR</option>
+                <option value="en">EN</option>
+              </select>
+              <button type="button" id="intentBtn" class="btn btn-primary">Detect intent</button>
+            </div>
+            <div id="intentNextStep" class="next-step" aria-live="polite"></div>
+            <div id="intentResult" class="result-box" aria-live="polite"></div>
+          </div>
+          <div id="audio" class="card-inner">
+            <h3>Audio test (Whisper + intent)</h3>
+            <p class="card-desc">Upload an audio file (e.g. call recording): transcription then intent detection and routing.</p>
+            <div class="form-row">
+              <input type="file" id="audioFile" accept=".mp3,.wav,.m4a,.webm,.ogg,.flac" class="input-file">
+              <span id="audioFileName" class="audio-file-name" aria-live="polite"></span>
+              <select id="audioLang" class="input" aria-label="Audio language">
+                <option value="fr">FR</option>
+                <option value="en">EN</option>
+              </select>
+              <button type="button" id="audioBtn" class="btn btn-primary">Transcribe and detect</button>
+            </div>
+            <div id="audioNextStep" class="next-step" aria-live="polite"></div>
+            <div id="audioResult" class="result-box" aria-live="polite"></div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- Top dropdown: What happens next -->
+    <section class="card dropdown-section">
+      <details class="dropdown-details" id="details-pipeline">
+        <summary class="dropdown-summary">What happens next</summary>
+        <div class="dropdown-inner" id="pipeline">
+          <p class="card-desc">Real flow: inbound call, qualification, then book, transfer or callback summary.</p>
+          <ol class="pipeline-steps">
+            <li><strong>Take the call</strong> — 24/7 reception (Vapi or other).</li>
+            <li><strong>Greet</strong> — Say the opening line (voice prompt API).</li>
+            <li><strong>Get what they said</strong> — Speech to text (STT); transcript is sent to the API.</li>
+            <li><strong>Check intent</strong> — Appointment, callback, info, emergency, after-sales, partner, other.</li>
+            <li><strong>Decide action</strong> — Book appointment, transfer, or collect callback summary.</li>
+            <li><strong>Act</strong> — Offer slots and create appointment; transfer to the right number; or save a callback summary.</li>
+          </ol>
+          <p class="pipeline-summary">So: <strong>Call → Greet → Speech (transcript) → Intent → Action → Book / Transfer / Callback</strong>.</p>
+        </div>
+      </details>
+    </section>
+
     <!-- 1. Two windows: Simulated | Vapi -->
     <section class="two-panes-section">
       <h2 class="two-panes-title">1. Try the flow</h2>
       <div class="two-panes">
         <section id="test-call" class="card pane pane-simulated">
           <h3 class="pane-heading">Simulated</h3>
-          <p class="card-desc">Simulate a call: enter what the caller said. Then see below what happens next (pipeline → call logged → callback or appointment).</p>
+          <p class="card-desc">Simulate a call: enter text or upload a call recording. Then transcribe → intent → callback or appointment (same flow as below).</p>
           <div class="form-row">
+            <label for="simInputType" class="form-label-optional">Input</label>
+            <select id="simInputType" class="input" aria-label="Simulated input type">
+              <option value="text">Enter text</option>
+              <option value="recording">Upload call recording</option>
+            </select>
+          </div>
+          <div id="simTextRow" class="form-row">
             <input type="text" id="callTranscript" class="input input-wide" placeholder="e.g. I'd like to be called back about opening hours" aria-label="What the caller said">
             <button type="button" id="testCallBtn" class="btn btn-primary">Simulate call</button>
+          </div>
+          <div id="simRecordingRow" class="form-row" style="display: none;">
+            <input type="file" id="callRecordingFile" accept=".mp3,.wav,.m4a,.webm,.ogg,.flac" class="input-file" aria-label="Call recording">
+            <span id="callRecordingFileName" class="audio-file-name" aria-live="polite"></span>
+            <select id="callRecordingLang" class="input" aria-label="Recording language">
+              <option value="fr">FR</option>
+              <option value="en">EN</option>
+            </select>
+            <button type="button" id="testCallBtnRecording" class="btn btn-primary">Simulate call (transcribe → intent → rest)</button>
           </div>
           <div class="form-row">
             <label for="callPhone" class="form-label-optional">Caller phone (optional)</label>
@@ -73,24 +145,9 @@
       </div>
     </section>
 
-    <!-- 2. Pipeline — what happens next -->
-    <section id="pipeline" class="card pipeline-card">
-      <h2>2. Pipeline: what happens next</h2>
-      <p class="card-desc">Real flow: inbound call, qualification, then book, transfer or callback summary.</p>
-      <ol class="pipeline-steps">
-        <li><strong>Take the call</strong> — 24/7 reception (Vapi or other).</li>
-        <li><strong>Greet</strong> — Say the opening line (voice prompt API).</li>
-        <li><strong>Get what they said</strong> — Speech to text (STT); transcript is sent to the API.</li>
-        <li><strong>Check intent</strong> — Appointment, callback, info, emergency, after-sales, partner, other.</li>
-        <li><strong>Decide action</strong> — Book appointment, transfer, or collect callback summary.</li>
-        <li><strong>Act</strong> — Offer slots and create appointment; transfer to the right number; or save a callback summary.</li>
-      </ol>
-      <p class="pipeline-summary">So: <strong>Call → Greet → Speech (transcript) → Intent → Action → Book / Transfer / Callback</strong>.</p>
-    </section>
-
-    <!-- 3. Calls — see the call you just made -->
+    <!-- 2. Calls — see the call you just made -->
     <section id="calls" class="card">
-      <h2>3. Calls</h2>
+      <h2>2. Calls</h2>
       <p class="card-desc">Recent calls: transcript, intent, action, outcome, importance, and scheduling (callback or appointment).</p>
       <div class="form-row">
         <button type="button" id="callsRefresh" class="btn btn-secondary">Refresh</button>
@@ -98,9 +155,9 @@
       <div id="callsList" class="calls-list" aria-live="polite"></div>
     </section>
 
-    <!-- 4. Callbacks — from the call above -->
+    <!-- 3. Callbacks — from the call above -->
     <section id="summaries" class="card">
-      <h2>4. Callbacks (callback summaries)</h2>
+      <h2>3. Callbacks (callback summaries)</h2>
       <p class="card-desc">List of requests pending callback; add manually or created automatically by the agent.</p>
       <div class="form-row">
         <select id="summariesFilter" class="input">
@@ -142,9 +199,9 @@
       <div id="sumAddResult" class="result-box" aria-live="polite"></div>
     </section>
 
-    <!-- 5. Calendar showcase: upcoming events, slots, create appointment -->
+    <!-- 4. Calendar showcase: upcoming events, slots, create appointment -->
     <section id="calendar" class="card calendar-showcase">
-      <h2>5. Calendar</h2>
+      <h2>4. Calendar</h2>
       <p class="card-desc">Upcoming appointments (all info findable: caller, reason, designated person). Slots and create form below.</p>
       <div class="form-row">
         <button type="button" id="calendarEventsRefresh" class="btn btn-secondary">Refresh upcoming events</button>
@@ -178,38 +235,6 @@
       <div id="apptResult" class="result-box" aria-live="polite"></div>
     </section>
 
-    <!-- 6. Intent -->
-    <section id="intent" class="card">
-      <h2>6. Intent detection (text)</h2>
-      <p class="card-desc">Enter a phrase as a caller would: the engine detects intent (appointment, callback, info, emergency, after-sales, partner) and action.</p>
-      <div class="form-row">
-        <input type="text" id="intentMessage" placeholder="e.g. I’d like an appointment to pick up my uniform" class="input input-wide">
-        <select id="intentLang" class="input" aria-label="Message language">
-          <option value="fr">FR</option>
-          <option value="en">EN</option>
-        </select>
-        <button type="button" id="intentBtn" class="btn btn-primary">Detect intent</button>
-      </div>
-      <div id="intentNextStep" class="next-step" aria-live="polite"></div>
-      <div id="intentResult" class="result-box" aria-live="polite"></div>
-    </section>
-
-    <!-- 7. Audio -->
-    <section id="audio" class="card">
-      <h2>7. Audio test (Whisper + intent)</h2>
-      <p class="card-desc">Upload an audio file (e.g. call recording): transcription then intent detection and routing.</p>
-      <div class="form-row">
-        <input type="file" id="audioFile" accept=".mp3,.wav,.m4a,.webm,.ogg,.flac" class="input-file">
-        <span id="audioFileName" class="audio-file-name" aria-live="polite"></span>
-        <select id="audioLang" class="input" aria-label="Audio language">
-          <option value="fr">FR</option>
-          <option value="en">EN</option>
-        </select>
-        <button type="button" id="audioBtn" class="btn btn-primary">Transcribe and detect</button>
-      </div>
-      <div id="audioNextStep" class="next-step" aria-live="polite"></div>
-      <div id="audioResult" class="result-box" aria-live="polite"></div>
-    </section>
 
   </main>
 
