@@ -298,17 +298,30 @@ function renderCalls(list) {
         const started = (c.started_at || '').replace('Z', ' ').slice(0, 19);
         const events = (c.events || []);
         const last = events[events.length - 1];
-        const transcript = last ? (last.transcript || '—').slice(0, 120) : '—';
+        const transcript = last ? (last.transcript || '—') : '—';
         const intent = last ? (last.intent || '—') : '—';
+        const action = last ? (last.action || '—') : '—';
         const outcome = last ? (last.outcome || '—') : '—';
+        const importance = c.importance != null ? String(c.importance) : '—';
+        const scheduling = c.scheduling != null ? String(c.scheduling) : (c.appointment_id ? 'Appointment booked' : '—');
         const summaryId = c.summary_id || '';
         const appointmentId = c.appointment_id || '';
-        const done = summaryId ? 'Callback saved' : appointmentId ? 'Appointment booked' : outcome;
+        const summaryReason = (c.summary_reason || '').slice(0, 150);
+        const purpose = (c.purpose || '').trim() || '—';
         return `
     <div class="call-item">
-      <div class="call-meta"><strong>${escapeHtml(started)}</strong> · ${escapeHtml(c.caller_phone || '—')}</div>
-      <div class="call-transcript">${escapeHtml(transcript)}${transcript.length >= 120 ? '…' : ''}</div>
-      <div class="call-outcome">Intent: ${escapeHtml(intent)} · ${escapeHtml(done)}</div>
+      <p class="call-purpose" aria-label="Purpose">${escapeHtml(purpose)}</p>
+      <dl class="call-fields">
+        <dt>Date & time</dt><dd>${escapeHtml(started)}</dd>
+        <dt>Caller</dt><dd>${escapeHtml(c.caller_phone || '—')}</dd>
+        <dt>Transcript</dt><dd class="call-transcript">${escapeHtml(transcript)}</dd>
+        <dt>Intent</dt><dd>${escapeHtml(intent)}</dd>
+        <dt>Action</dt><dd>${escapeHtml(action)}</dd>
+        <dt>Outcome</dt><dd>${escapeHtml(outcome)}</dd>
+        <dt>Importance</dt><dd>${escapeHtml(importance)}</dd>
+        <dt>Scheduling</dt><dd>${escapeHtml(scheduling)}</dd>
+        ${summaryReason ? `<dt>Reason</dt><dd class="call-reason">${escapeHtml(summaryReason)}${summaryReason.length >= 150 ? '…' : ''}</dd>` : ''}
+      </dl>
       ${summaryId ? `<div class="call-ref">Callback: <code>${escapeHtml(summaryId)}</code></div>` : ''}
       ${appointmentId ? `<div class="call-ref">Appointment: <code>${escapeHtml(appointmentId)}</code></div>` : ''}
     </div>

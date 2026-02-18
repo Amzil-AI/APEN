@@ -15,12 +15,12 @@
       <h1 class="logo">APEN <span class="logo-sub">Agent MVP</span></h1>
       <nav class="nav">
         <a href="#pipeline" class="nav-link">Pipeline</a>
+        <a href="#calls" class="nav-link">Calls</a>
         <a href="#intent" class="nav-link">Intent</a>
         <a href="#audio" class="nav-link">Audio</a>
         <a href="#slots" class="nav-link">Slots</a>
         <a href="#appointments" class="nav-link">Appointments</a>
         <a href="#summaries" class="nav-link">Callbacks</a>
-        <a href="#calls" class="nav-link">Calls</a>
         <a href="#test-call" class="nav-link">Test call</a>
         <a href="#voice" class="nav-link">Voice</a>
       </nav>
@@ -57,6 +57,16 @@
         <li><strong>Act</strong> — Offer slots + create appointment · or transfer to the right number · or save a callback summary.</li>
       </ol>
       <p class="pipeline-summary">So: <strong>Call → Greet → Speech (transcript) → Intent → Action → Book / Transfer / Callback</strong>.</p>
+    </section>
+
+    <!-- Call log (Vapi calls: transcript, intent, importance, scheduling) -->
+    <section id="calls" class="card">
+      <h2>Calls</h2>
+      <p class="card-desc">Recent calls: transcript, intent, action, outcome, importance, and scheduling (callback or appointment).</p>
+      <div class="form-row">
+        <button type="button" id="callsRefresh" class="btn btn-secondary">Refresh</button>
+      </div>
+      <div id="callsList" class="calls-list" aria-live="polite"></div>
     </section>
 
     <!-- Intent -->
@@ -165,16 +175,6 @@
         <button type="button" id="sumAddBtn" class="btn btn-primary">Save</button>
       </div>
       <div id="sumAddResult" class="result-box" aria-live="polite"></div>
-    </section>
-
-    <!-- Call log (Vapi calls → transcript, intent, outcome) -->
-    <section id="calls" class="card">
-      <h2>Calls</h2>
-      <p class="card-desc">Recent calls: transcript, intent, and what the agent did (callback summary or appointment).</p>
-      <div class="form-row">
-        <button type="button" id="callsRefresh" class="btn btn-secondary">Refresh</button>
-      </div>
-      <div id="callsList" class="calls-list" aria-live="polite"></div>
     </section>
 
     <!-- Test call taking -->

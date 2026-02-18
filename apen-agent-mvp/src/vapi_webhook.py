@@ -238,14 +238,23 @@ def handle_transfer_destination_request(call: Optional[dict] = None) -> Optional
 def handle_vapi_message(body: dict) -> Optional[dict]:
     """
     Dispatch Vapi webhook body. Returns response dict for assistant-request, tool-calls; None for others.
-    Accepts both shapes: body.message.type or body.type (Vapi can send either).
+    Accepts both shapes: body.message.type or body.type (Vapi can send either). Also accepts camelCase (assistantRequest).
     """
+    import logging
+    log = logging.getLogger("apen-agent-mvp.vapi")
+
     msg = body.get("message") if "message" in body else body
     msg = msg or {}
-    typ = msg.get("type") or body.get("type")
+    typ = (msg.get("type") or body.get("type") or "").strip()
+    if not typ and "message" in body:
+        typ = (body.get("message", {}).get("type") or "").strip()
+    # Vapi may send assistant-request or assistantRequest
+    if typ == "assistantRequest":
+        typ = "assistant-request"
     call = msg.get("call") or body.get("call")
 
     if typ == "assistant-request":
+        log.info("Vapi assistant-request received")
         return handle_assistant_request(call)
     if typ == "tool-calls":
         tool_list = msg.get("toolCallList") or msg.get("tool_call_list") or []
@@ -253,4 +262,6 @@ def handle_vapi_message(body: dict) -> Optional[dict]:
     if typ == "transfer-destination-request":
         return handle_transfer_destination_request(call)
 
+    if typ or body:
+        log.warning("Vapi webhook unhandled message type: %s (keys: %s)", typ or "(empty)", list(body.keys()))
     return None

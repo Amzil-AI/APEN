@@ -322,10 +322,57 @@ def update_summary_status(summary_id: str, body: StatusUpdate):
 
 # --- Call log (Vapi calls → dashboard) ---
 
+def _call_purpose_line(c: dict) -> str:
+    """One-line purpose summary from intent, outcome, transcript, and scheduling."""
+    events = c.get("events") or []
+    last = events[-1] if events else {}
+    intent = (last.get("intent") or "").strip() or "inquiry"
+    outcome = (last.get("outcome") or "").strip()
+    transcript = (last.get("transcript") or "").strip()[:80]
+    if transcript and len((last.get("transcript") or "")) > 80:
+        transcript = transcript.rstrip() + "…"
+    reason = (c.get("summary_reason") or "").strip()[:60]
+    if reason and len((c.get("summary_reason") or "")) > 60:
+        reason = reason.rstrip() + "…"
+    appointment_id = c.get("appointment_id")
+    # Build purpose line by intent
+    intent_labels = {
+        "appointment": "Appointment request",
+        "callback": "Callback request",
+        "info": "Information request",
+        "emergency": "Urgent / emergency",
+        "after_sales": "After-sales",
+        "partner": "Partner inquiry",
+        "other": "General inquiry",
+    }
+    label = intent_labels.get(intent, intent.replace("_", " ").title()) if intent else "General inquiry"
+    if appointment_id:
+        return f"{label} — appointment booked."
+    if outcome == "transfer":
+        return f"{label} — transferred to team."
+    if reason:
+        return f"{label} — {reason}"
+    if transcript and transcript != "—":
+        return f"{label} — {transcript}"
+    return f"{label} — callback noted."
+
+
 @app.get("/calls")
 def list_calls(limit: int = 100):
-    """List recent calls (transcript, intent, outcome, summary/appointment). For dashboard."""
-    return {"calls": call_log.list_calls(limit=limit)}
+    """List recent calls (transcript, intent, outcome, importance, scheduling, purpose). Enriched with summary and one-line purpose."""
+    calls = call_log.list_calls(limit=limit)
+    for c in calls:
+        sid = c.get("summary_id")
+        if sid:
+            s = summary_store.get_summary(sid)
+            if s:
+                c["importance"] = s.get("urgency") or "—"
+                c["summary_reason"] = (s.get("reason") or "")[:200]
+        if not c.get("importance"):
+            c["importance"] = "—"
+        c["scheduling"] = "Appointment booked" if c.get("appointment_id") else "—"
+        c["purpose"] = _call_purpose_line(c)
+    return {"calls": calls}
 
 
 # --- Voice (provider-agnostic: Vapi, Bland, or any platform – no Twilio) ---

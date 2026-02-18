@@ -7,8 +7,41 @@ intents:
     id: appointment
     name: "Prise de rendez-vous / Appointment booking"
     description: "Caller wants to book a slot (e.g. uniform collection, visit)"
-    keywords_fr: ["rendez-vous", "rdv", "réserver", "créneau", "tenue", "récupérer tenue", "passer", "prendre rdv"]
-    keywords_en: ["appointment", "book", "schedule", "slot", "uniform", "pick up", "booking"]
+    keywords_fr:
+      - "rendez-vous"
+      - "rdv"
+      - "réserver"
+      - "créneau"
+      - "tenue"
+      - "récupérer tenue"
+      - "passer"
+      - "prendre rdv"
+      - "prise de rendez-vous"
+      - "prendre un rendez-vous"
+      - "je voudrais un rdv"
+      - "réserver un créneau"
+      - "récupération tenue"
+      - "venir chercher"
+      - "passer récupérer"
+      - "planifier"
+      - "disponibilités"
+      - "dispo"
+    keywords_en:
+      - "appointment"
+      - "book"
+      - "schedule"
+      - "slot"
+      - "uniform"
+      - "pick up"
+      - "booking"
+      - "make an appointment"
+      - "need an appointment"
+      - "would like to book"
+      - "schedule a visit"
+      - "available slot"
+      - "availability"
+      - "come in"
+      - "drop by"
     action: book_appointment
     transfer_default: null
 
@@ -16,8 +49,38 @@ intents:
     id: callback
     name: "Rappel / Call back"
     description: "Caller asks to be called back or leave a message for callback"
-    keywords_fr: ["rappel", "rappeler", "être rappelé", "rappelez-moi", "recontact", "recontacter", "rappelez moi", "me rappeler"]
-    keywords_en: ["call back", "callback", "call me back", "ring back", "call back please", "get back"]
+    keywords_fr:
+      - "rappel"
+      - "rappeler"
+      - "être rappelé"
+      - "rappelez-moi"
+      - "recontact"
+      - "recontacter"
+      - "rappelez moi"
+      - "me rappeler"
+      - "pouvez-vous me rappeler"
+      - "je souhaite être rappelé"
+      - "rappelez-moi s'il vous plaît"
+      - "laisser un message"
+      - "message de rappel"
+      - "qu'on me rappelle"
+      - "qu'on me recontacte"
+    keywords_en:
+      - "call back"
+      - "callback"
+      - "call me back"
+      - "ring back"
+      - "call back please"
+      - "get back"
+      - "please call me back"
+      - "would like to be called back"
+      - "like to be called back"
+      - "leave a message"
+      - "call me"
+      - "call back when"
+      - "someone call me"
+      - "get back to me"
+      - "call me later"
     action: collect_summary
     transfer_default: reception
 
@@ -25,8 +88,44 @@ intents:
     id: info
     name: "Demande d'information / Information request"
     description: "Caller asks for hours, address, general info"
-    keywords_fr: ["horaires", "heures", "adresse", "ouvert", "fermé", "info", "renseignement", "où", "quand", "comment"]
-    keywords_en: ["hours", "address", "open", "closed", "information", "where", "when", "how"]
+    keywords_fr:
+      - "horaires"
+      - "heures"
+      - "adresse"
+      - "ouvert"
+      - "fermé"
+      - "info"
+      - "renseignement"
+      - "où"
+      - "quand"
+      - "comment"
+      - "heures d'ouverture"
+      - "joignable"
+      - "contacter"
+      - "coordonnées"
+      - "site"
+      - "localisation"
+      - "accès"
+      - "tarif"
+      - "prix"
+      - "documentation"
+    keywords_en:
+      - "hours"
+      - "address"
+      - "open"
+      - "closed"
+      - "information"
+      - "where"
+      - "when"
+      - "how"
+      - "opening hours"
+      - "reach"
+      - "contact"
+      - "location"
+      - "directions"
+      - "price"
+      - "cost"
+      - "info about"
     action: provide_info
     transfer_default: null
 
@@ -34,8 +133,26 @@ intents:
     id: emergency
     name: "Urgence opérationnelle / Operational emergency"
     description: "Urgent operational or site issue"
-    keywords_fr: ["urgence", "urgent", "incident", "problème site", "alerte"]
-    keywords_en: ["emergency", "urgent", "incident", "alert"]
+    keywords_fr:
+      - "urgence"
+      - "urgent"
+      - "incident"
+      - "problème site"
+      - "alerte"
+      - "critique"
+      - "immédiat"
+      - "sécurité"
+      - "accident"
+    keywords_en:
+      - "emergency"
+      - "urgent"
+      - "incident"
+      - "alert"
+      - "critical"
+      - "asap"
+      - "immediately"
+      - "safety"
+      - "accident"
     action: transfer
     transfer_default: operations
 
@@ -43,8 +160,29 @@ intents:
     id: after_sales
     name: "SAV / After-sales"
     description: "Product or service issue, complaint"
-    keywords_fr: ["sav", "réclamation", "ne fonctionne pas", "panne", "défaut"]
-    keywords_en: ["complaint", "not working", "broken", "issue"]
+    keywords_fr:
+      - "sav"
+      - "réclamation"
+      - "ne fonctionne pas"
+      - "panne"
+      - "défaut"
+      - "problème"
+      - "casse"
+      - "retour"
+      - "échanger"
+      - "garantie"
+      - "dépannage"
+    keywords_en:
+      - "complaint"
+      - "not working"
+      - "broken"
+      - "issue"
+      - "return"
+      - "exchange"
+      - "warranty"
+      - "defect"
+      - "faulty"
+      - "repair"
     action: transfer
     transfer_default: support
 
@@ -52,8 +190,26 @@ intents:
     id: partner
     name: "Partenaire / Partner"
     description: "Partner or B2B contact"
-    keywords_fr: ["partenaire", "partenariat", "proposition", "devis", "commercial"]
-    keywords_en: ["partner", "partnership", "quote", "commercial"]
+    keywords_fr:
+      - "partenaire"
+      - "partenariat"
+      - "proposition"
+      - "devis"
+      - "commercial"
+      - "b2b"
+      - "entreprise"
+      - "pro"
+      - "marché public"
+    keywords_en:
+      - "partner"
+      - "partnership"
+      - "quote"
+      - "commercial"
+      - "b2b"
+      - "business"
+      - "enterprise"
+      - "proposal"
+      - "tender"
     action: transfer
     transfer_default: commercial
 
