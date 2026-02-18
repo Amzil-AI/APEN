@@ -192,6 +192,46 @@ body {
   font-weight: 600;
 }
 
+/* Two panes: Simulated | Vapi */
+.two-panes-section {
+  margin-bottom: 1.5rem;
+  scroll-margin-top: 5rem;
+}
+
+.two-panes-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.two-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.two-panes .pane {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.pane-heading {
+  margin: 0 0 0.35rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pane-simulated .pane-heading { color: var(--accent); }
+.pane-vapi .pane-heading { color: var(--success); }
+
+@media (max-width: 768px) {
+  .two-panes {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Forms */
 .form-row {
   display: flex;

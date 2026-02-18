@@ -5,7 +5,7 @@ Fully config-driven; startup automates storage init and config validation.
 """
 from contextlib import asynccontextmanager
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 import logging
 
@@ -404,6 +404,22 @@ def voice_process(body: VoiceProcessRequest):
     call_log.log_call_started(call_id, body.caller_phone or "")
     result = voice.process_speech(body.transcript, body.caller_phone, body.site, body.language)
     outcome = "transfer" if result.get("response_type") == "transfer" else "callback"
+    # When test call is appointment intent, try to actually book a slot so the user sees an appointment created
+    if result.get("intent") == "appointment" and result.get("action") == "book_appointment":
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        slots = calendar_client.get_available_slots(tomorrow)
+        if slots:
+            slot = slots[0]
+            subject = "Uniform collection (test call)"
+            ev = calendar_client.create_appointment(
+                slot["start"], slot["end"], subject, "", attendee_email=None
+            )
+            if ev and ev.get("id"):
+                result["appointment_id"] = ev["id"]
+                result["response_type"] = "appointment_booked"
+                result["say_message"] = f"Rendez-vous confirmé: {subject} le {slot['start'][:10]} à {slot['start'][11:16]}."
+                outcome = "appointment_booked"
+                call_log.log_appointment_booked(call_id, ev["id"])
     call_log.log_route_result(
         call_id,
         transcript=(body.transcript or "").strip(),
@@ -411,6 +427,7 @@ def voice_process(body: VoiceProcessRequest):
         action=result.get("action") or "",
         outcome=outcome,
         summary_id=result.get("summary_id"),
+        appointment_id=result.get("appointment_id"),
     )
     call_log.call_ended(call_id, full_transcript=(body.transcript or "").strip())
     c = call_log.get_call(call_id)

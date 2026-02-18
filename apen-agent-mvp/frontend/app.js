@@ -428,7 +428,10 @@ document.getElementById('testCallBtn')?.addEventListener('click', async () => {
       lines.push('Message: « ' + (data.say_message || '') + ' »');
     } else {
       lines.push('Message to say: « ' + (data.say_message || '') + ' »');
-      if (data.response_type === 'callback') {
+      if (data.response_type === 'appointment_booked' && data.appointment_id) {
+        lines.push('');
+        lines.push('→ Appointment created (see Appointments and Calls).');
+      } else if (data.response_type === 'callback') {
         lines.push('');
         lines.push('→ Callback summary created (see Callbacks section).');
         if (typeof loadSummaries === 'function') loadSummaries();
@@ -436,7 +439,9 @@ document.getElementById('testCallBtn')?.addEventListener('click', async () => {
     }
     setResult(resultEl, lines.join('\n'), 'success');
     if (typeof loadCalls === 'function') loadCalls();
-    if (data.response_type === 'callback') {
+    if (data.response_type === 'appointment_booked') {
+      setNextStep(nextEl, 'An appointment was created. Check the Appointments section and Calls (Scheduling: Appointment booked).');
+    } else if (data.response_type === 'callback') {
       setNextStep(nextEl, 'A summary was saved. Refresh the Callbacks section to see it.');
     }
   } catch (e) {
