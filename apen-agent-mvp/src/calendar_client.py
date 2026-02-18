@@ -85,6 +85,52 @@ def get_available_slots(
     return slots[:10]  # Return at most 10 slots for MVP
 
 
+def list_events(
+    time_min: Optional[datetime] = None,
+    time_max: Optional[datetime] = None,
+    max_results: int = 50,
+) -> list[dict]:
+    """
+    List calendar events in the given time range. Returns list of dicts with
+    id, summary, description, start, end, htmlLink.
+    """
+    service = _get_service()
+    if not service or not CALENDAR_ID:
+        return []
+    if time_min is None:
+        time_min = datetime.utcnow()
+    if time_max is None:
+        time_max = time_min + timedelta(days=14)
+    try:
+        events_result = (
+            service.events()
+            .list(
+                calendarId=CALENDAR_ID,
+                timeMin=time_min.isoformat() + "Z" if not time_min.tzinfo else time_min.isoformat(),
+                timeMax=time_max.isoformat() + "Z" if not time_max.tzinfo else time_max.isoformat(),
+                singleEvents=True,
+                orderBy="startTime",
+                maxResults=max_results,
+            )
+            .execute()
+        )
+        out = []
+        for ev in events_result.get("items", []):
+            start = ev.get("start", {}).get("dateTime") or ev.get("start", {}).get("date")
+            end = ev.get("end", {}).get("dateTime") or ev.get("end", {}).get("date")
+            out.append({
+                "id": ev.get("id"),
+                "summary": ev.get("summary") or "(No title)",
+                "description": (ev.get("description") or "").strip(),
+                "start": start,
+                "end": end,
+                "htmlLink": ev.get("htmlLink"),
+            })
+        return out
+    except HttpError:
+        return []
+
+
 def create_appointment(
     start_iso: str,
     end_iso: str,

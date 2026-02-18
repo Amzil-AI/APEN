@@ -182,6 +182,8 @@ document.getElementById('apptBtn')?.addEventListener('click', async () => {
   const start = document.getElementById('apptStart').value;
   const end = document.getElementById('apptEnd').value;
   const summary = document.getElementById('apptSummary').value.trim();
+  const descEl = document.getElementById('apptDescription');
+  const description = (descEl && descEl.value) ? descEl.value.trim() : 'APEN – Prise de rendez-vous (agent IA)';
   const email = document.getElementById('apptEmail').value.trim() || null;
   const resultEl = document.getElementById('apptResult');
   const btn = document.getElementById('apptBtn');
@@ -202,13 +204,14 @@ document.getElementById('apptBtn')?.addEventListener('click', async () => {
         start_iso: startIso,
         end_iso: endIso,
         summary,
-        description: 'APEN – Uniform collection / agent MVP',
+        description,
         attendee_email: email,
       }),
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
     setResult(resultEl, 'Appointment created: ' + (data.htmlLink || data.id || JSON.stringify(data)), 'success');
+    if (typeof loadCalendarEvents === 'function') loadCalendarEvents();
   } catch (e) {
     setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
   } finally {
@@ -226,18 +229,23 @@ function renderSummaries(list) {
   }
   container.innerHTML = list
     .map(
-      (s) => `
+      (s) => {
+        const d = s.designated_for_callback || {};
+        const designatedLine = (d.label && d.number) ? `Transfer to: ${escapeHtml(d.label)} — ${escapeHtml(d.number)}` : (d.label ? `Designated: ${escapeHtml(d.label)}` : '');
+        return `
     <div class="summary-item" data-id="${s.id}">
       <div class="info">
         <span class="name">${escapeHtml(s.caller_name)}</span> · ${escapeHtml(s.caller_phone)}
         <div class="meta">${escapeHtml(s.reason)} · ${s.site} · ${s.urgency} · ${s.status}</div>
+        ${designatedLine ? `<div class="meta designated">${designatedLine}</div>` : ''}
       </div>
       <div class="actions">
         ${s.status === 'pending' ? `<button type="button" class="btn btn-sm btn-secondary" data-action="called">Called back</button>` : ''}
         <button type="button" class="btn btn-sm btn-secondary" data-action="closed">Close</button>
       </div>
     </div>
-  `
+  `;
+      }
     )
     .join('');
 
@@ -346,6 +354,57 @@ async function loadCalls() {
 
 document.getElementById('callsRefresh')?.addEventListener('click', loadCalls);
 
+// --- Calendar: upcoming events (showcase) ---
+function formatEventDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) +
+    (iso.includes('T') ? ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '');
+}
+
+function renderCalendarEvents(events) {
+  const container = document.getElementById('calendarEventsList');
+  if (!container) return;
+  if (!events || events.length === 0) {
+    container.innerHTML = '<p class="card-desc">No upcoming events. Create an appointment or connect Google Calendar.</p>';
+    return;
+  }
+  container.innerHTML = events
+    .map(
+      (ev) => {
+        const desc = (ev.description || '').trim();
+        const descShort = desc ? desc.slice(0, 120) + (desc.length > 120 ? '…' : '') : '';
+        const descBlock = desc ? `<details class="event-desc"><summary>Description</summary><pre class="event-desc-body">${escapeHtml(desc)}</pre></details>` : '';
+        const link = ev.htmlLink ? `<a href="${escapeHtml(ev.htmlLink)}" target="_blank" rel="noopener" class="event-link">Open in Calendar</a>` : '';
+        return `
+    <div class="calendar-event-item">
+      <div class="event-time">${escapeHtml(formatEventDate(ev.start))}</div>
+      <div class="event-summary">${escapeHtml(ev.summary)}</div>
+      ${descShort ? `<div class="event-desc-preview">${escapeHtml(descShort)}</div>` : ''}
+      ${descBlock}
+      ${link}
+    </div>
+  `;
+      }
+    )
+    .join('');
+}
+
+async function loadCalendarEvents() {
+  const container = document.getElementById('calendarEventsList');
+  if (!container) return;
+  try {
+    const r = await fetch(API + '/calendar/events?days=14');
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || r.statusText);
+    renderCalendarEvents(data.events || []);
+  } catch (e) {
+    container.innerHTML = '<p class="result-box error">Error: ' + escapeHtml(e.message) + '</p>';
+  }
+}
+
+document.getElementById('calendarEventsRefresh')?.addEventListener('click', loadCalendarEvents);
+
 // --- Add summary ---
 document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
   const name = document.getElementById('sumName').value.trim();
@@ -440,7 +499,7 @@ document.getElementById('testCallBtn')?.addEventListener('click', async () => {
     setResult(resultEl, lines.join('\n'), 'success');
     if (typeof loadCalls === 'function') loadCalls();
     if (data.response_type === 'appointment_booked') {
-      setNextStep(nextEl, 'An appointment was created. Check the Appointments section and Calls (Scheduling: Appointment booked).');
+      setNextStep(nextEl, 'An appointment was created. Check the Calendar section and Calls (Scheduling: Appointment booked).');
     } else if (data.response_type === 'callback') {
       setNextStep(nextEl, 'A summary was saved. Refresh the Callbacks section to see it.');
     }
@@ -493,10 +552,11 @@ document.getElementById('audioLang')?.addEventListener('change', function () {
   if (intentLang) intentLang.value = this.value;
 });
 
-// Init: health + load summaries + calls + set default date
+// Init: health + load summaries + calls + calendar events + set default date
 checkHealth();
 loadSummaries();
 loadCalls();
+loadCalendarEvents();
 const today = new Date().toISOString().slice(0, 10);
 const dateEl = document.getElementById('slotsDate');
 if (dateEl && !dateEl.value) dateEl.value = today;

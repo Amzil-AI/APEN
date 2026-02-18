@@ -243,6 +243,37 @@ async def audio_to_intent(
     }
 
 
+@app.get("/calendar/events")
+def list_calendar_events(
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    days: int = 14,
+):
+    """
+    List upcoming calendar events. Optional from_date/to_date (YYYY-MM-DD) or days (default 14).
+    Returns events with id, summary, description, start, end, htmlLink so all info is findable in the calendar.
+    """
+    now = datetime.utcnow()
+    if from_date:
+        try:
+            time_min = datetime.strptime(from_date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(422, "Invalid from_date, use YYYY-%m-%d")
+    else:
+        time_min = now
+    if to_date:
+        try:
+            time_max = datetime.strptime(to_date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(422, "Invalid to_date, use YYYY-%m-%d")
+    else:
+        time_max = time_min + timedelta(days=min(days, 60))
+    if time_max <= time_min:
+        time_max = time_min + timedelta(days=days)
+    events = calendar_client.list_events(time_min=time_min, time_max=time_max)
+    return {"events": events, "from": time_min.strftime("%Y-%m-%d"), "to": time_max.strftime("%Y-%m-%d")}
+
+
 @app.get("/slots")
 def get_slots(date: Optional[str] = None):
     """
@@ -298,10 +329,23 @@ def create_summary(body: SummaryCreate):
     )
 
 
+def _designated_for_callback(site: str) -> dict:
+    """Return designated person for callback (reception per site) from routing rules."""
+    data = get_routing_rules()
+    by_site = (data.get("routing") or {}).get("by_site") or {}
+    site = site or (data.get("routing") or {}).get("default_site") or "paris"
+    numbers = by_site.get(site) or by_site.get("paris") or {}
+    number = numbers.get("reception") or ""
+    return {"target": "reception", "label": "Reception", "number": number or ""}
+
+
 @app.get("/summaries")
 def list_summaries(status: Optional[str] = None, limit: int = 50):
-    """List callback summaries for follow-up. Filter by status: pending, called, closed."""
-    return {"summaries": summary_store.list_summaries(status=status, limit=limit)}
+    """List callback summaries for follow-up. Filter by status: pending, called, closed. Each summary includes designated_for_callback (transfer to)."""
+    summaries = summary_store.list_summaries(status=status, limit=limit)
+    for s in summaries:
+        s["designated_for_callback"] = _designated_for_callback(s.get("site") or "paris")
+    return {"summaries": summaries}
 
 
 @app.get("/summaries/{summary_id}")
@@ -411,8 +455,14 @@ def voice_process(body: VoiceProcessRequest):
         if slots:
             slot = slots[0]
             subject = "Uniform collection (test call)"
+            desc_parts = ["APEN – Prise de rendez-vous (agent IA)"]
+            if (body.transcript or "").strip():
+                desc_parts.append("Reason: " + (body.transcript or "").strip()[:300])
+            if (body.caller_phone or "").strip():
+                desc_parts.append("Caller: " + (body.caller_phone or "").strip())
+            desc_parts.append("Designated: Reception (callback/transfer)")
             ev = calendar_client.create_appointment(
-                slot["start"], slot["end"], subject, "", attendee_email=None
+                slot["start"], slot["end"], subject, "\n".join(desc_parts), attendee_email=None
             )
             if ev and ev.get("id"):
                 result["appointment_id"] = ev["id"]

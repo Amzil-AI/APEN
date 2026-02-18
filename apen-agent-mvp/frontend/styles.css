@@ -288,6 +288,13 @@ body {
   color: var(--text);
 }
 
+.input-textarea {
+  min-height: 4rem;
+  resize: vertical;
+  width: 100%;
+  max-width: 420px;
+}
+
 .card-desc-small {
   margin-top: 0.5rem;
   font-size: 0.85rem;
@@ -421,6 +428,77 @@ body {
 .summary-item .actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.summary-item .meta.designated {
+  color: var(--accent);
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+/* Calendar showcase */
+.calendar-showcase .divider {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.calendar-events-list {
+  margin-top: 0.75rem;
+}
+
+.calendar-event-item {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.6rem;
+  background: var(--bg);
+}
+
+.calendar-event-item .event-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.calendar-event-item .event-summary {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.calendar-event-item .event-desc-preview {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.calendar-event-item .event-desc {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.calendar-event-item .event-desc-body {
+  margin: 0.35rem 0 0 0;
+  padding: 0.5rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+
+.calendar-event-item .event-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.calendar-event-item .event-link:hover {
+  text-decoration: underline;
 }
 
 .calls-list {
