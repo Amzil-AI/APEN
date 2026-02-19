@@ -138,8 +138,8 @@ document.getElementById('audioBtn')?.addEventListener('click', async () => {
       method: 'POST',
       body: form,
     });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.detail || r.statusText);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || data.message || r.statusText || (r.status === 503 ? 'Service unavailable. Set OPENAI_API_KEY on the server for voice transcription.' : 'Request failed'));
     const text = [
       'Transcription: ' + (data.transcript || '(empty)'),
       'Intent: ' + data.intent,
@@ -378,11 +378,15 @@ function formatEventDate(iso) {
     (iso.includes('T') ? ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '');
 }
 
-function renderCalendarEvents(events) {
+function renderCalendarEvents(events, calendarConfigured) {
   const container = document.getElementById('calendarEventsList');
   if (!container) return;
   if (!events || events.length === 0) {
-    container.innerHTML = '<p class="card-desc">No upcoming events. Create an appointment or connect Google Calendar.</p>';
+    if (calendarConfigured === false) {
+      container.innerHTML = '<p class="result-box card-desc">Calendar not connected. Set <code>GOOGLE_APPLICATION_CREDENTIALS</code> (path to service account JSON) and <code>GOOGLE_CALENDAR_ID</code> on the server, then restart. <a href="https://developers.google.com/calendar/api/quickstart/python" target="_blank" rel="noopener">Google Calendar API</a>.</p>';
+    } else {
+      container.innerHTML = '<p class="card-desc">No upcoming events. Create an appointment above.</p>';
+    }
     return;
   }
   container.innerHTML = events
@@ -411,9 +415,9 @@ async function loadCalendarEvents() {
   if (!container) return;
   try {
     const r = await fetch(API + '/calendar/events?days=14');
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.detail || r.statusText);
-    renderCalendarEvents(data.events || []);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || data.message || r.statusText);
+    renderCalendarEvents(data.events || [], data.calendar_configured);
   } catch (e) {
     container.innerHTML = '<p class="result-box error">Error: ' + escapeHtml(e.message) + '</p>';
   }
@@ -563,8 +567,8 @@ document.getElementById('testCallBtnRecording')?.addEventListener('click', async
       method: 'POST',
       body: form,
     });
-    const data1 = await r1.json();
-    if (!r1.ok) throw new Error(data1.detail || r1.statusText);
+    const data1 = await r1.json().catch(() => ({}));
+    if (!r1.ok) throw new Error(data1.detail || data1.message || r1.statusText || (r1.status === 503 ? 'Transcription unavailable. Set OPENAI_API_KEY on the server.' : 'Request failed'));
     const transcript = (data1.transcript || '').trim();
     if (!transcript) {
       setResult(resultEl, 'No speech detected in the recording.', 'error');
@@ -581,8 +585,8 @@ document.getElementById('testCallBtnRecording')?.addEventListener('click', async
         language: lang,
       }),
     });
-    const data = await r2.json();
-    if (!r2.ok) throw new Error(data.detail || r2.statusText);
+    const data = await r2.json().catch(() => ({}));
+    if (!r2.ok) throw new Error(data.detail || data.message || r2.statusText || (r2.status === 503 ? 'Service unavailable.' : 'Request failed'));
     const lines = [
       'Transcript: ' + transcript.slice(0, 100) + (transcript.length > 100 ? '…' : ''),
       'Intent: ' + (data.intent || '—'),

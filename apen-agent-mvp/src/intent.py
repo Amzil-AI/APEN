@@ -1,5 +1,11 @@
-"""Intent detection from caller message (rule-based for MVP)."""
+"""Intent detection from caller message. Uses AI when OPENAI_API_KEY is set, else rule-based keywords."""
 from .config_loader import get_intents
+
+try:
+    from . import ai_intent
+    _has_ai = True
+except ImportError:
+    _has_ai = False
 
 
 def detect_intent(message: str, language: str = "fr") -> str:
@@ -23,6 +29,17 @@ def detect_intent(message: str, language: str = "fr") -> str:
                 return intent_id
 
     return "other"
+
+
+def detect_intent_with_ai(message: str, language: str = "fr") -> str:
+    """Detect intent using AI when available, otherwise keyword-based. Same return shape as detect_intent."""
+    if not message or not message.strip():
+        return "other"
+    if _has_ai:
+        ai_id = ai_intent.detect_intent_ai(message, language or "fr")
+        if ai_id:
+            return ai_id
+    return detect_intent(message, language)
 
 
 def get_intent_action(intent_id: str) -> str:

@@ -272,7 +272,12 @@ def list_calendar_events(
     if time_max <= time_min:
         time_max = time_min + timedelta(days=days)
     events = calendar_client.list_events(time_min=time_min, time_max=time_max)
-    return {"events": events, "from": time_min.strftime("%Y-%m-%d"), "to": time_max.strftime("%Y-%m-%d")}
+    return {
+        "events": events,
+        "from": time_min.strftime("%Y-%m-%d"),
+        "to": time_max.strftime("%Y-%m-%d"),
+        "calendar_configured": calendar_client.is_configured(),
+    }
 
 
 @app.get("/slots")
@@ -289,7 +294,11 @@ def get_slots(date: Optional[str] = None):
     else:
         dt = datetime.now()
     slots = calendar_client.get_available_slots(dt)
-    return {"date": dt.strftime("%Y-%m-%d"), "slots": slots}
+    return {
+        "date": dt.strftime("%Y-%m-%d"),
+        "slots": slots,
+        "calendar_configured": calendar_client.is_configured(),
+    }
 
 
 @app.post("/appointments")

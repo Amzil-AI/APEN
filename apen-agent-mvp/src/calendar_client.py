@@ -15,11 +15,17 @@ try:
 except ImportError:
     HAS_GOOGLE = False
 
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    ZoneInfo = None  # type: ignore
 
 SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
 # For MVP, we support service account JSON path
 CREDENTIALS_PATH = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 CALENDAR_ID = os.environ.get("GOOGLE_CALENDAR_ID", "primary")
+# Business hours and slot times are in this timezone
+TIMEZONE = os.environ.get("GOOGLE_CALENDAR_TIMEZONE", "Europe/Paris")
 
 
 def _get_service():
@@ -27,6 +33,24 @@ def _get_service():
         return None
     creds = service_account.Credentials.from_service_account_file(CREDENTIALS_PATH, scopes=SCOPES)
     return build("calendar", "v3", credentials=creds)
+
+
+def is_configured() -> bool:
+    """True if Google Calendar credentials and calendar ID are set and usable."""
+    return _get_service() is not None and bool(CALENDAR_ID)
+
+
+def _day_range_paris(date: datetime) -> tuple[datetime, datetime]:
+    """Return (day_start, day_end) for the given date in Europe/Paris (9:00–18:00)."""
+    y, m, d = date.year, date.month, date.day
+    if ZoneInfo:
+        tz = ZoneInfo(TIMEZONE)
+        day_start = datetime(y, m, d, 9, 0, 0, tzinfo=tz)
+        day_end = datetime(y, m, d, 18, 0, 0, tzinfo=tz)
+        return day_start, day_end
+    day_start = date.replace(hour=9, minute=0, second=0, microsecond=0)
+    day_end = date.replace(hour=18, minute=0, second=0, microsecond=0)
+    return day_start, day_end
 
 
 def get_available_slots(
@@ -38,11 +62,11 @@ def get_available_slots(
 ) -> list[dict]:
     """
     Return list of slot dicts {start, end} in ISO format for the given date.
-    Excludes slots that overlap existing events (if calendar is configured).
+    Uses Europe/Paris for business hours when available. Excludes slots that
+    overlap existing events (if calendar is configured).
     """
     service = _get_service()
-    day_start = date.replace(hour=business_start, minute=0, second=0, microsecond=0)
-    day_end = date.replace(hour=business_end, minute=0, second=0, microsecond=0)
+    day_start, day_end = _day_range_paris(date)
     slots = []
     current = day_start
 
@@ -56,12 +80,14 @@ def get_available_slots(
 
     if service and CALENDAR_ID:
         try:
+            time_min = day_start.isoformat() if day_start.tzinfo else day_start.isoformat() + "Z"
+            time_max = day_end.isoformat() if day_end.tzinfo else day_end.isoformat() + "Z"
             events = (
                 service.events()
                 .list(
                     calendarId=CALENDAR_ID,
-                    timeMin=day_start.isoformat() + "Z" if day_start.tzinfo else day_start.isoformat(),
-                    timeMax=day_end.isoformat() + "Z" if day_end.tzinfo else day_end.isoformat(),
+                    timeMin=time_min,
+                    timeMax=time_max,
                     singleEvents=True,
                 )
                 .execute()
