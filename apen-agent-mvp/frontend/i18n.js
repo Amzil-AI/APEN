@@ -8,7 +8,6 @@
   const T = {
     en: {
       lang: 'Language',
-      heroProject: '',
       heroTagline: '24/7 reception · Appointment booking · Call qualification · Transfers · Callback summaries',
       heroDesc: 'Intent engine and APIs for calendar, callbacks and voice. Connect your phone system (e.g. Vapi) to this API for live calls.',
       navIntentAudio: 'Intent & Audio',
@@ -125,7 +124,6 @@
     },
     fr: {
       lang: 'Langue',
-      heroProject: '',
       heroTagline: 'Accueil 24h/24 · Prise de rendez-vous · Qualification des appels · Transferts · Rappels',
       heroDesc: 'Moteur d\'intentions et API calendrier, rappels et voix. Connectez votre téléphonie (ex. Vapi) à cette API pour les appels en direct.',
       navIntentAudio: 'Intent & Audio',

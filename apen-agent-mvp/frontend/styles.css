@@ -194,17 +194,6 @@ html[data-theme="light"] .theme-icon.light-icon {
   border: 1px solid var(--border);
 }
 
-.hero-project {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin: 0 0 0.75rem 0;
-  font-weight: 500;
-}
-
-.hero-project:empty {
-  display: none;
-}
-
 .hero-tagline {
   font-size: 1.1rem;
   font-weight: 600;
