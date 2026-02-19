@@ -254,15 +254,23 @@ def list_calendar_events(
     """
     List upcoming calendar events. Optional from_date/to_date (YYYY-MM-DD) or days (default 14).
     Returns events with id, summary, description, start, end, htmlLink so all info is findable in the calendar.
+    Uses start of today (Paris) as time_min so events added today appear immediately (API excludes events that started before time_min).
     """
-    now = datetime.utcnow()
     if from_date:
         try:
             time_min = datetime.strptime(from_date, "%Y-%m-%d")
         except ValueError:
             raise HTTPException(422, "Invalid from_date, use YYYY-%m-%d")
     else:
-        time_min = now
+        # Start of today in Paris so today's events (including just-added) show up
+        try:
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo(getattr(calendar_client, "TIMEZONE", "Europe/Paris"))
+            now_local = datetime.now(tz)
+            time_min = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        except Exception:
+            now_local = datetime.utcnow()
+            time_min = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
     if to_date:
         try:
             time_max = datetime.strptime(to_date, "%Y-%m-%d")
