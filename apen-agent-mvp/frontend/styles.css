@@ -77,25 +77,32 @@ body {
 
 /* Theme toggle */
 .btn-icon {
-  padding: 0.4rem 0.6rem;
-  background: transparent;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
   border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 1.1rem;
+  color: var(--text);
+  font-size: 1.2rem;
   line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
 }
 
 .btn-icon:hover {
-  color: var(--text);
   background: var(--border);
+  color: var(--text);
 }
 
 .theme-icon {
   display: none;
+  pointer-events: none;
 }
 
-[data-theme="dark"] .theme-icon.dark-icon,
-[data-theme="light"] .theme-icon.light-icon {
+html[data-theme="dark"] .theme-icon.dark-icon,
+html[data-theme="light"] .theme-icon.light-icon {
   display: inline;
 }
 
@@ -192,6 +199,10 @@ body {
   color: var(--text-muted);
   margin: 0 0 0.75rem 0;
   font-weight: 500;
+}
+
+.hero-project:empty {
+  display: none;
 }
 
 .hero-tagline {

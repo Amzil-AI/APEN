@@ -8,8 +8,8 @@
   const T = {
     en: {
       lang: 'Language',
-      heroProject: 'APEN conversational agent — call reception across Paris, Le Havre, Reims, Nancy and Nantes. MVP scope per feasibility study.',
-      heroTagline: '24/7 reception · Appointment booking (e.g. uniform collection) · Call qualification · Transfers · Callback summaries',
+      heroProject: '',
+      heroTagline: '24/7 reception · Appointment booking · Call qualification · Transfers · Callback summaries',
       heroDesc: 'Intent engine and APIs for calendar, callbacks and voice. Connect your phone system (e.g. Vapi) to this API for live calls.',
       navIntentAudio: 'Intent & Audio',
       navPipeline: 'What happens next',
@@ -125,8 +125,8 @@
     },
     fr: {
       lang: 'Langue',
-      heroProject: 'Agent conversationnel APEN — accueil téléphonique Paris, Le Havre, Reims, Nancy et Nantes. Périmètre MVP de l\'étude de faisabilité.',
-      heroTagline: 'Accueil 24h/24 · Prise de rendez-vous (ex. récupération tenue) · Qualification des appels · Transferts · Rappels',
+      heroProject: '',
+      heroTagline: 'Accueil 24h/24 · Prise de rendez-vous · Qualification des appels · Transferts · Rappels',
       heroDesc: 'Moteur d\'intentions et API calendrier, rappels et voix. Connectez votre téléphonie (ex. Vapi) à cette API pour les appels en direct.',
       navIntentAudio: 'Intent & Audio',
       navPipeline: 'Étapes suivantes',
