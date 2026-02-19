@@ -32,7 +32,7 @@ Open http://localhost:8000/ — dashboard (EN/FR, light/dark theme).
 | `GOOGLE_CALENDAR_ID` | Calendar ID (e.g. `primary` or `c_xxx@group.calendar.google.com`) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | OAuth for calendar (no service account key needed) |
 
-**Calendar OAuth:** Run `python scripts/oauth_refresh_token.py` from `apen-agent-mvp/`, add `http://localhost:8766/` to OAuth redirect URIs in Google Cloud, paste the refresh token into `.env`.
+**Calendar OAuth:** Run `python scripts/oauth_refresh_token.py`, add `http://localhost:8766/` to OAuth redirect URIs in Google Cloud, paste the refresh token into `.env`.
 
 ## URLs
 
@@ -81,20 +81,18 @@ Set Server URL to `https://your-app/webhooks/vapi`. Add tools: `apen_route`, `ap
 ## Project structure
 
 ```
-apen-agent-mvp/
-├── config/       intents.yaml, routing_rules.yaml, voice.yaml
-├── src/          main.py, intent.py, ai_intent.py, ai_automation.py,
-│                 voice.py, vapi_webhook.py, calendar_client.py,
-│                 summary_store.py, call_log.py, transcribe.py,
-│                 planning.py, email_send.py
-├── frontend/     index.html, app.js, styles.css, i18n.js
-└── scripts/      oauth_refresh_token.py, test_calendar.py
+config/          intents.yaml, routing_rules.yaml, voice.yaml
+src/             main.py, intent.py, ai_intent.py, ai_automation.py,
+                 voice.py, vapi_webhook.py, calendar_client.py,
+                 summary_store.py, call_log.py, transcribe.py,
+                 planning.py, email_send.py
+frontend/        index.html, app.js, styles.css, i18n.js
+scripts/         oauth_refresh_token.py, test_calendar.py
 ```
 
 ## Testing
 
 ```bash
-cd apen-agent-mvp
 python scripts/test_calendar.py
 curl -X POST "http://localhost:8000/audio/intent?language=fr" -F "file=@recording.mp3"
 ```
