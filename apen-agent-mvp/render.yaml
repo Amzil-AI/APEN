@@ -1,0 +1,28 @@
+# Render Blueprint – APEN Agent MVP
+# If your repo root is the parent of apen-agent-mvp, set rootDirectory on the service or use this file from apen-agent-mvp as repo root.
+
+services:
+  - type: web
+    name: apen-agent-mvp
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: BASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_CALENDAR_ID
+        sync: false
+      # Option A: service account (path to secret file – add as Secret File in Render)
+      # - key: GOOGLE_APPLICATION_CREDENTIALS
+      #   sync: false
+      # Option B: OAuth (no key file – add these as Environment variables)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REFRESH_TOKEN
+        sync: false
+      - key: VAPI_ASSISTANT_ID
+        sync: false

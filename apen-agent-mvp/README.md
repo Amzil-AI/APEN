@@ -85,13 +85,17 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 ## Deploy on Render
 
-1. Connect the repo (root: this repo; set **Root Directory** to `apen-agent-mvp`).
-2. **Build command:** `pip install -r requirements.txt`
-3. **Start command:** `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
-4. **Environment:** Set `BASE_URL` to your public URL (e.g. `https://your-app.onrender.com`) so the app and Vapi webhook URL are correct. Optionally: `OPENAI_API_KEY`, `GOOGLE_CALENDAR_ID`, `GOOGLE_APPLICATION_CREDENTIALS` (path to secret file).
-5. **Vapi:** In Vapi dashboard set Server URL to `https://your-app.onrender.com/webhooks/vapi`. If calls don’t work, see [docs/VAPI-TROUBLESHOOTING.md](docs/VAPI-TROUBLESHOOTING.md).
+See **[RENDER.md](RENDER.md)** for step-by-step instructions.
 
-A `render.yaml` at repo root is available for Blueprint deploy.
+Summary:
+
+1. **New Web Service** → connect repo, set **Root Directory** to `apen-agent-mvp`.
+2. **Build:** `pip install -r requirements.txt`
+3. **Start:** `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
+4. **Environment:** Set `BASE_URL` (your app URL), `OPENAI_API_KEY`, `GOOGLE_CALENDAR_ID`. For **calendar on Render** use **OAuth** (no service account key): set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` — get the refresh token locally with `python scripts/oauth_refresh_token.py` (see [RENDER.md](RENDER.md)).
+5. **Vapi:** Server URL = `https://your-app.onrender.com/webhooks/vapi`.
+
+A `render.yaml` is in this directory for Blueprint deploy.
 
 ## API overview
 

@@ -1,12 +1,15 @@
 """
 Google Calendar integration for appointment booking (MVP).
-Uses a service account or OAuth; set GOOGLE_CALENDAR_ID and credentials path in env.
+Supports two auth methods (no service account key required for OAuth):
+1. Service account: GOOGLE_APPLICATION_CREDENTIALS (path to JSON key)
+2. OAuth 2.0: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN
+   Use when your org blocks service account key creation (iam.disableServiceAccountKeyCreation).
+   Run scripts/oauth_refresh_token.py once to obtain the refresh token.
 """
 from datetime import datetime, timedelta
 from typing import Optional
 import os
 
-# Optional: only load if credentials available
 try:
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
@@ -16,27 +19,58 @@ except ImportError:
     HAS_GOOGLE = False
 
 try:
+    from google.oauth2.credentials import Credentials as OAuth2Credentials
+    from google.auth.transport.requests import Request
+    HAS_OAUTH = True
+except ImportError:
+    HAS_OAUTH = False
+
+try:
     from zoneinfo import ZoneInfo
 except ImportError:
     ZoneInfo = None  # type: ignore
 
 SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
-# For MVP, we support service account JSON path
 CREDENTIALS_PATH = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 CALENDAR_ID = os.environ.get("GOOGLE_CALENDAR_ID", "primary")
-# Business hours and slot times are in this timezone
 TIMEZONE = os.environ.get("GOOGLE_CALENDAR_TIMEZONE", "Europe/Paris")
+# OAuth 2.0 (when service account keys are disabled by org policy)
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
+GOOGLE_REFRESH_TOKEN = os.environ.get("GOOGLE_REFRESH_TOKEN", "").strip()
 
 
 def _get_service():
-    if not HAS_GOOGLE or not CREDENTIALS_PATH or not os.path.exists(CREDENTIALS_PATH):
+    """Return Calendar API service using service account or OAuth2 credentials."""
+    if not HAS_GOOGLE:
         return None
-    creds = service_account.Credentials.from_service_account_file(CREDENTIALS_PATH, scopes=SCOPES)
-    return build("calendar", "v3", credentials=creds)
+    # 1) Service account (JSON key file)
+    if CREDENTIALS_PATH and os.path.exists(CREDENTIALS_PATH):
+        try:
+            creds = service_account.Credentials.from_service_account_file(CREDENTIALS_PATH, scopes=SCOPES)
+            return build("calendar", "v3", credentials=creds)
+        except Exception:
+            pass
+    # 2) OAuth 2.0 (client ID + secret + refresh token; no key file)
+    if HAS_OAUTH and GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN:
+        try:
+            creds = OAuth2Credentials(
+                token=None,
+                refresh_token=GOOGLE_REFRESH_TOKEN,
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=GOOGLE_CLIENT_ID,
+                client_secret=GOOGLE_CLIENT_SECRET,
+                scopes=SCOPES,
+            )
+            creds.refresh(Request())
+            return build("calendar", "v3", credentials=creds)
+        except Exception:
+            pass
+    return None
 
 
 def is_configured() -> bool:
-    """True if Google Calendar credentials and calendar ID are set and usable."""
+    """True if Google Calendar credentials and calendar ID are set and usable (service account or OAuth)."""
     return _get_service() is not None and bool(CALENDAR_ID)
 
 
