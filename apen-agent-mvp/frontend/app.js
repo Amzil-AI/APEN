@@ -671,6 +671,26 @@ document.getElementById('voiceCopyBtn')?.addEventListener('click', () => {
   }
 });
 
+// --- Theme (light/dark; persisted)
+const THEME_KEY = 'apen-theme';
+function getPreferredTheme() {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+  return 'dark';
+}
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+}
+(function initTheme() {
+  setTheme(getPreferredTheme());
+})();
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
+
 // --- Language selector (UI + intent/audio; persisted)
 (function initLang() {
   const stored = localStorage.getItem(UI_LANG_KEY) || localStorage.getItem(LANG_KEY) || 'en';

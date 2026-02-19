@@ -142,6 +142,10 @@ Supported formats: **mp3, wav, m4a, webm, ogg, flac**.
 3. **POST /voice/process** – Send `{ "transcript": "...", "caller_phone": "+33..." }`; we return `response_type` (transfer | callback), `transfer_number` or `say_message`, and we create a callback summary when not transferring.
 4. **Transfer numbers** – Edit `config/routing_rules.yaml` and replace `+33XXXXXXXX` with real numbers per site. See [docs/Beyond-Limova.md](docs/Beyond-Limova.md).
 
+## Client showcase
+
+**[MVP-SHOWCASE.md](MVP-SHOWCASE.md)** — Product document for the client: workflow, capabilities, dashboard, voice integration, and deployment. Use this to present the MVP.
+
 ## Delivering and showing the MVP
 
 To **run and demo** the MVP (no slides): [DELIVER-AND-SHOW-MVP.md](DELIVER-AND-SHOW-MVP.md) — start the app, open http://localhost:8000/, follow the step-by-step demo flow.

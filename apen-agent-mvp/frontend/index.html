@@ -23,6 +23,10 @@
         <a href="#voice" class="nav-link" data-i18n="navVoice"></a>
       </nav>
       <div class="header-right">
+        <button type="button" id="themeToggle" class="btn btn-icon" aria-label="Toggle theme" title="Toggle light/dark theme">
+          <span class="theme-icon dark-icon" aria-hidden="true">☀</span>
+          <span class="theme-icon light-icon" aria-hidden="true">☽</span>
+        </button>
         <div class="lang-wrap">
           <label class="lang-label" for="langSelect" data-i18n="lang"></label>
           <select id="langSelect" class="input lang-select" aria-label="Language for intent detection">
@@ -136,11 +140,6 @@
         <section id="voice" class="card pane pane-vapi">
           <h3 class="pane-heading" data-i18n="vapiLive"></h3>
           <p class="card-desc"><span data-i18n="vapiDesc"></span> <strong><a href="tel:+16614809377">+1 661 480 9377</a></strong>. <span data-i18n="vapiGreeting"></span></p>
-          <div class="form-row voice-url-row">
-            <input type="text" id="voiceWebhookUrl" class="input input-wide input-readonly" readonly spellcheck="false" aria-label="Vapi webhook URL">
-            <button type="button" id="voiceCopyBtn" class="btn btn-secondary" data-i18n="copyUrl">Copy URL</button>
-          </div>
-          <p class="card-desc card-desc-small"><a href="/docs" target="_blank" rel="noopener" data-i18n="apiDocs">API documentation</a>: <code>GET /voice/prompt</code>, <code>POST /voice/process</code>, <code>POST /webhooks/vapi</code>.</p>
         </section>
       </div>
     </section>

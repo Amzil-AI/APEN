@@ -1,5 +1,7 @@
 /* APEN Agent MVP – Frontend */
-:root {
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
   --bg: #0f1419;
   --bg-card: #1a2129;
   --border: #2d3843;
@@ -13,6 +15,23 @@
   --font: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
+
+/* Light theme */
+[data-theme="light"] {
+  --bg: #f6f8fa;
+  --bg-card: #ffffff;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --text-muted: #656d76;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --success: #1a7f37;
+  --error: #cf222e;
+}
+
+[data-theme="light"] .result-box.error { color: #c24a52; }
+[data-theme="light"] .result-box.success { color: #2a9d4a; }
+[data-theme="light"] .btn-secondary:hover { background: #b1bac4; }
 
 * {
   box-sizing: border-box;
@@ -54,6 +73,30 @@ body {
   align-items: center;
   gap: 1rem;
   margin-left: auto;
+}
+
+/* Theme toggle */
+.btn-icon {
+  padding: 0.4rem 0.6rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.btn-icon:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
+.theme-icon {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon.dark-icon,
+[data-theme="light"] .theme-icon.light-icon {
+  display: inline;
 }
 
 .lang-wrap {
