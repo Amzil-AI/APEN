@@ -1,8 +1,6 @@
 # APEN
 
-Repository for the **APEN** AI conversational agent project (reception, appointment booking, transfer, callback summaries). Aligned with the feasibility study *AI Conversational Agent for APEN*.
-
-## Contents
+Repository for the **APEN** AI conversational agent project (reception, appointment booking, transfer, callback summaries). 
 
 | Item | Description |
 |------|-------------|
