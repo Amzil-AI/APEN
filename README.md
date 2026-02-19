@@ -34,14 +34,6 @@ Open http://localhost:8000/ — dashboard (EN/FR, light/dark theme).
 
 **Calendar OAuth:** Run `python scripts/oauth_refresh_token.py`, add `http://localhost:8766/` to OAuth redirect URIs in Google Cloud, paste the refresh token into `.env`.
 
-## URLs
-
-| URL | Description |
-|-----|-------------|
-| http://localhost:8000/ | Dashboard |
-| http://localhost:8000/docs | API docs (Swagger) |
-| http://localhost:8000/health | Health check |
-
 ## API (main endpoints)
 
 | Method | Endpoint | Description |
