@@ -27,8 +27,8 @@ if _env.exists():
     load_dotenv(_env)
 
 SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
-# Use 8765 to avoid conflict with uvicorn (often on 8080/8000)
-REDIRECT_URI = "http://localhost:8765/"
+# Use 8766 (8765 often in use). Add this exact URI to OAuth client: http://localhost:8766/
+REDIRECT_URI = "http://localhost:8766/"
 
 def main():
     try:
@@ -57,7 +57,8 @@ def main():
     }
     flow = InstalledAppFlow.from_client_config(client_config, SCOPES, redirect_uri=REDIRECT_URI)
     print("If you get 'redirect_uri_mismatch': Add", REDIRECT_URI, "to your OAuth client's Authorized redirect URIs (Web application).")
-    creds = flow.run_local_server(port=8765)
+    # prompt='consent' forces the consent screen so we always get a refresh token
+    creds = flow.run_local_server(port=8766, prompt="consent")
 
     if creds and creds.refresh_token:
         print("\nAdd this to your .env (or set in your environment):\n")

@@ -400,10 +400,15 @@ def automation_callback_to_calendar(summary_id: str):
     suggested = ai_automation.suggest_calendar_event_for_callback(s)
     if not suggested:
         raise HTTPException(503, "OPENAI_API_KEY not set. AI automation unavailable.")
-    # First try tomorrow, then today
-    now = datetime.utcnow()
-    for days_ahead in (1, 0):
-        day = (now + timedelta(days=days_ahead)).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Use Paris time for today, then try next 7 days
+    try:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(getattr(calendar_client, "TIMEZONE", "Europe/Paris"))
+        now_local = datetime.now(tz)
+    except Exception:
+        now_local = datetime.utcnow()
+    for days_ahead in range(8):
+        day = (now_local + timedelta(days=days_ahead)).replace(hour=0, minute=0, second=0, microsecond=0)
         slots = calendar_client.get_available_slots(day)
         if slots:
             slot = slots[0]
@@ -421,7 +426,10 @@ def automation_callback_to_calendar(summary_id: str):
                     "event": ev,
                     "message": f"Calendar event created: {suggested['title']}",
                 }
-    raise HTTPException(503, "No free slot found (today or tomorrow). Calendar may be full or not configured.")
+    raise HTTPException(
+        503,
+        "No free slot in the next 7 days. Calendar may be full, or check that it is configured (OAuth or service account).",
+    )
 
 
 # --- Call log (Vapi calls → dashboard) ---
