@@ -1,159 +1,175 @@
 # APEN Agent MVP
 
-Backend and configuration for the **AI conversational agent MVP** (inbound calls, appointment booking, callback summaries). Aligned with the [Feasibility Study](../Feasibility-Study-AI-Conversational-Agent-APEN.md).
+Backend and web dashboard for the **AI conversational agent MVP** — 24/7 call reception, appointment booking, callback summaries. Aligned with the [Feasibility Study](../Feasibility-Study-AI-Conversational-Agent-APEN.md).
 
 ## MVP scope (P0)
 
-- **24/7 reception** – no wait (any **voice provider** – Vapi, Bland, etc. – calls our API; **no Twilio**)
-- **Intent qualification** – appointment, info, emergency, after-sales, partner, other
-- **Appointment booking** – slots from Google Calendar, create events (e.g. uniform collection)
-- **Transfer rules** – route to operations / support / commercial / reception by intent and site
-- **Callback summary** – store caller info and reason for follow-up (auto from voice flow)
-- **Planning publish/send** – upload file, get download link (POST `/planning/upload`, GET `/planning/{id}`)
-- **Email auto-reply** – personalized acknowledgment (POST `/email/ack`); send email (POST `/email/send`) with SMTP
+| Capability | Description |
+|------------|-------------|
+| **24/7 reception** | No wait; any voice provider (Vapi, Bland, etc.) calls our API. *Vapi integration in testing.* |
+| **Intent qualification** | Appointment, callback, info, emergency, after-sales, partner, other. AI when `OPENAI_API_KEY` set, else keywords. |
+| **Appointment booking** | Slots from Google Calendar; create events (9h–18h Paris). |
+| **Transfer rules** | Route to operations / support / commercial / reception by intent and site (`config/routing_rules.yaml`). |
+| **Callback summary** | Store caller info and reason; AI extracts fields from transcript when `OPENAI_API_KEY` set. |
+| **Planning & email** | `POST /planning/upload`, `GET /planning/{id}`; `POST /email/ack`, `POST /email/send` (SMTP). |
 
-**We build Limova and more:** [docs/WE-BUILD-LIMOVA-AND-MORE.md](docs/WE-BUILD-LIMOVA-AND-MORE.md). Use **Vapi** with our **POST /webhooks/vapi** as Server URL for full voice flow (no Twilio, no Limova). See also [docs/Beyond-Limova.md](docs/Beyond-Limova.md).
+---
 
-## Pipeline (structure)
+## Quick start
 
-1. **Input** – Text (POST `/intent`) or audio (POST `/audio/intent` → Whisper → text).
-2. **Config** – `config/intents.yaml` (keywords, action per intent) and `config/routing_rules.yaml` (routing target per intent).
-3. **Intent + action + routing** – Backend returns `intent`, `action`, `routing_target` for every message.
-4. **Downstream** – According to action: use **slots + appointments** (book_appointment), **transfer** (by intent/site), or **summaries** (collect_summary for callback).
+### 1. Install
 
-Full flow and module roles: [docs/PIPELINE.md](docs/PIPELINE.md).
+```bash
+cd apen-agent-mvp
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Environment
+
+Copy `.env.example` to `.env`. Key variables:
+
+| Variable | Purpose |
+|----------|---------|
+| `OPENAI_API_KEY` | Whisper (audio), AI intent, callback extraction, Add to calendar (AI) |
+| `GOOGLE_CALENDAR_ID` | Calendar ID (e.g. `primary` or `c_xxx@group.calendar.google.com`) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | OAuth for calendar (when service account keys are blocked) |
+
+Calendar: use **OAuth** on Render — run `python scripts/oauth_refresh_token.py` once, add redirect URI `http://localhost:8766/` to your OAuth client if the script uses port 8766. See [RENDER.md](RENDER.md).
+
+### 3. Run
+
+```bash
+./run.sh
+# or: uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+- **App:** http://localhost:8000/
+- **API docs:** http://localhost:8000/docs
+- **Health:** http://localhost:8000/health
+
+---
 
 ## Project structure
 
 ```
 apen-agent-mvp/
 ├── config/
-│   ├── intents.yaml           # Intent definitions and keywords
+│   ├── intents.yaml           # Intent keywords (FR/EN)
 │   ├── routing_rules.yaml     # Transfer rules by intent and site
-│   └── scripts/               # Call scripts (greeting, appointment, transfer, summary)
+│   ├── voice.yaml             # Greeting, messages
+│   └── scripts/               # Call scripts
 ├── src/
-│   ├── main.py                # FastAPI app + frontend routes
-│   ├── config_loader.py       # Load YAML + get_routing_target()
-│   ├── intent.py              # Rule-based intent detection
-│   ├── transcribe.py          # Whisper API (audio → text)
-│   ├── voice.py               # Voice logic (provider-agnostic: Vapi, Bland, etc. – no Twilio)
-│   ├── planning.py            # Planning upload/store/download
-│   ├── email_send.py          # SMTP + acknowledgment template
-│   ├── calendar_client.py     # Google Calendar integration
-│   └── summary_store.py       # Callback summary storage (JSON file)
-├── frontend/                  # Web UI (index.html, styles.css, app.js)
-├── data/                      # Runtime: callback_summaries.json, plannings/
+│   ├── main.py                # FastAPI app
+│   ├── intent.py              # Intent detection (AI + keywords)
+│   ├── ai_intent.py           # OpenAI-based intent
+│   ├── ai_automation.py       # Add to calendar (AI)
+│   ├── voice.py               # Voice logic (provider-agnostic)
+│   ├── vapi_webhook.py        # Vapi Server URL handler
+│   ├── calendar_client.py     # Google Calendar (OAuth or service account)
+│   ├── summary_store.py      # Callback summaries
+│   ├── call_log.py           # Call log for dashboard
+│   ├── transcribe.py         # Whisper
+│   ├── planning.py           # Planning upload/download
+│   └── email_send.py         # SMTP
+├── frontend/                  # Dashboard (EN/FR, light/dark theme)
+├── scripts/
+│   ├── oauth_refresh_token.py  # Get Google OAuth refresh token
+│   └── test_calendar.py        # Test calendar connectivity
+├── data/                      # Runtime data
 ├── requirements.txt
 ├── .env.example
-├── README.md
+├── render.yaml
 └── docs/
-    └── pilot-checklist.md
 ```
 
-## Quick start
-
-### 1. Install dependencies
-
-```bash
-cd apen-agent-mvp
-python -m venv .venv
-source .venv/bin/activate   # or .venv\Scripts\activate on Windows
-pip install -r requirements.txt
-```
-
-### 2. Environment (optional for calendar)
-
-Copy `.env.example` to `.env` and set:
-
-- `GOOGLE_APPLICATION_CREDENTIALS` – path to Google service account JSON
-- `GOOGLE_CALENDAR_ID` – calendar ID (e.g. `primary` or the shared calendar ID)
-
-- `OPENAI_API_KEY` – for **audio testing**: transcribe with Whisper and get intent (POST `/audio/intent`).
-
-If not set, the API will still run; **GET /slots** returns generic slots and **POST /appointments** returns 503 until calendar is configured. **POST /audio/intent** returns 503 until `OPENAI_API_KEY` is set.
-
-### 3. Run the API
-
-```bash
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-- **App (frontend):** http://localhost:8000/ or http://localhost:8000/app/  
-- API docs: http://localhost:8000/docs  
-- Health: http://localhost:8000/health  
-- Config (base URL, webhook URL): http://localhost:8000/config  
-
-## Deploy on Render
-
-See **[RENDER.md](RENDER.md)** for step-by-step instructions.
-
-Summary:
-
-1. **New Web Service** → connect repo, set **Root Directory** to `apen-agent-mvp`.
-2. **Build:** `pip install -r requirements.txt`
-3. **Start:** `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
-4. **Environment:** Set `BASE_URL` (your app URL), `OPENAI_API_KEY`, `GOOGLE_CALENDAR_ID`. For **calendar on Render** use **OAuth** (no service account key): set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` — get the refresh token locally with `python scripts/oauth_refresh_token.py` (see [RENDER.md](RENDER.md)).
-5. **Vapi:** Server URL = `https://your-app.onrender.com/webhooks/vapi`.
-
-A `render.yaml` is in this directory for Blueprint deploy.
+---
 
 ## API overview
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
-| GET | `/config` | Base URL and webhook URL (for frontend; uses `BASE_URL` or request) |
+| GET | `/config` | Base URL, webhook URL |
 | POST | `/intent` | Detect intent from text `{ "message": "...", "language": "fr" }` |
-| POST | `/audio/intent` | **Upload audio file** → transcribe (Whisper) → intent + action + routing (needs `OPENAI_API_KEY`) |
-| GET | `/slots?date=2025-02-18` | Available appointment slots for a date |
-| POST | `/appointments` | Create calendar event (body: start_iso, end_iso, summary, …) |
-| GET | `/routing` | Get routing rules (for agent config) |
-| POST | `/summaries` | Store callback summary |
-| GET | `/summaries?status=pending` | List summaries (pending / called / closed) |
-| GET | `/summaries/{id}` | Get one summary |
-| PATCH | `/summaries/{id}` | Update status `{ "status": "called" }` |
-| GET | `/voice/prompt` | Greeting text for start of call (any provider uses for TTS) |
-| POST | `/voice/process` | **Provider-agnostic:** body `{ transcript, caller_phone }` → intent, transfer_number or say_message |
-| POST | `/webhooks/vapi` | **Vapi Server URL** – we return assistant + apen_route tool; handle transfer-destination-request (build Limova and more) |
-| POST | `/planning/upload` | Upload planning file → id + download_url |
-| GET | `/planning/{id}` | Download planning file |
-| POST | `/email/ack` | Generate/send acknowledgment (incoming_subject, incoming_from, to?) |
-| POST | `/email/send` | Send email (to, subject, body) – needs SMTP env |
+| POST | `/audio/intent` | Upload audio → Whisper → intent + action + routing |
+| GET | `/slots?date=YYYY-MM-DD` | Available appointment slots |
+| POST | `/appointments` | Create calendar event |
+| GET | `/calendar/events?days=14` | List upcoming events |
+| POST | `/automation/callback-to-calendar/{id}` | Add callback to calendar (AI picks slot) |
+| GET | `/calls` | Recent calls (simulated + Vapi) |
+| GET | `/summaries?status=pending` | List callback summaries |
+| PATCH | `/summaries/{id}` | Update status |
+| GET | `/voice/prompt` | Greeting for call start |
+| POST | `/voice/process` | Process transcript → intent, transfer or callback |
+| POST | `/webhooks/vapi` | Vapi Server URL |
+| POST | `/planning/upload` | Upload planning file |
+| GET | `/planning/{id}` | Download planning |
+| POST | `/email/ack` | Acknowledgment email |
+| POST | `/email/send` | Send email (SMTP) |
 
-## Testing with an audio file
+---
 
-1. Set `OPENAI_API_KEY` in `.env` (or export it).
-2. Install deps and start the API (see Quick start).
-3. Call the audio endpoint:
+## Dashboard
 
+- **Bilingual:** EN / FR
+- **Theme:** Light / dark toggle
+- **Sections:** Intent & audio tests, simulated call, calls list, callbacks, calendar (events, slots, create appointment)
+- **Add to calendar (AI):** One-click from callback summary → AI suggests title/description, books first free slot in 8 days
+
+---
+
+## Voice (Vapi)
+
+*Vapi integration is in testing phase.*
+
+1. Set **Server URL** in Vapi to `https://your-app/webhooks/vapi`
+2. Add tools: `apen_route`, `apen_get_slots`, `apen_book_appointment`
+3. See [VAPI-ASSISTANT-SETUP.md](VAPI-ASSISTANT-SETUP.md) for full setup
+
+---
+
+## Deploy on Render
+
+See [RENDER.md](RENDER.md). Summary:
+
+1. Connect repo, set **Root Directory** to `apen-agent-mvp`
+2. **Build:** `pip install -r requirements.txt`
+3. **Start:** `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
+4. **Env:** `BASE_URL`, `OPENAI_API_KEY`, `GOOGLE_CALENDAR_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`
+5. **Vapi:** Server URL = `https://your-app.onrender.com/webhooks/vapi`
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [MVP-SHOWCASE.md](MVP-SHOWCASE.md) | Product showcase (EN) — workflow, capabilities, deployment |
+| [MVP-SHOWCASE-FR.md](MVP-SHOWCASE-FR.md) | Same in French |
+| [DELIVER-AND-SHOW-MVP.md](DELIVER-AND-SHOW-MVP.md) | Demo flow |
+| [RENDER.md](RENDER.md) | Render deployment |
+| [VAPI-ASSISTANT-SETUP.md](VAPI-ASSISTANT-SETUP.md) | Vapi configuration |
+| [docs/PIPELINE.md](docs/PIPELINE.md) | Pipeline and architecture |
+| [docs/pilot-checklist.md](docs/pilot-checklist.md) | PoC / pilot steps |
+
+---
+
+## Testing
+
+**Calendar:**
 ```bash
-curl -X POST "http://localhost:8000/audio/intent?language=fr" \
-  -F "file=@/path/to/your/audio.mp3"
+python scripts/test_calendar.py
 ```
 
-Response: `transcript`, `intent`, `action`, `routing_target`. You can also use the **Swagger UI** at http://localhost:8000/docs → **POST /audio/intent** → Try it out → choose your file.
+**Audio intent:**
+```bash
+curl -X POST "http://localhost:8000/audio/intent?language=fr" -F "file=@recording.mp3"
+```
 
-Supported formats: **mp3, wav, m4a, webm, ogg, flac**.
+---
 
-## Voice (provider-agnostic – no Twilio)
+## License
 
-1. **Any voice platform** (Vapi, Bland, or your SIP/STT) handles the phone number and the call.
-2. **GET /voice/prompt** – Get greeting text; use it for your TTS.
-3. **POST /voice/process** – Send `{ "transcript": "...", "caller_phone": "+33..." }`; we return `response_type` (transfer | callback), `transfer_number` or `say_message`, and we create a callback summary when not transferring.
-4. **Transfer numbers** – Edit `config/routing_rules.yaml` and replace `+33XXXXXXXX` with real numbers per site. See [docs/Beyond-Limova.md](docs/Beyond-Limova.md).
-
-## Client showcase
-
-**[MVP-SHOWCASE.md](MVP-SHOWCASE.md)** — Product document for the client: workflow, capabilities, dashboard, voice integration, and deployment. Use this to present the MVP.
-
-## Delivering and showing the MVP
-
-To **run and demo** the MVP (no slides): [DELIVER-AND-SHOW-MVP.md](DELIVER-AND-SHOW-MVP.md) — start the app, open http://localhost:8000/, follow the step-by-step demo flow.
-
-## Pilot runbook
-
-See [docs/pilot-checklist.md](docs/pilot-checklist.md) for PoC/Pilot steps, KPIs and go-live checklist.
-
-## License / internal use
-
-APEN internal – feasibility and MVP only.
+APEN internal – feasibility and MVP scope.
