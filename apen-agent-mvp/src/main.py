@@ -245,6 +245,7 @@ async def audio_to_intent(
 
 
 @app.get("/calendar/events")
+@app.get("/calendar/events/")
 def list_calendar_events(
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
@@ -301,7 +302,13 @@ def get_slots(date: Optional[str] = None):
     }
 
 
+@app.options("/appointments")
+@app.options("/appointments/")
+def options_appointments():
+    return {}
+
 @app.post("/appointments")
+@app.post("/appointments/")
 def create_appointment_endpoint(body: AppointmentCreate):
     """Create a calendar appointment (e.g. uniform collection)."""
     result = calendar_client.create_appointment(
@@ -376,6 +383,10 @@ def update_summary_status(summary_id: str, body: StatusUpdate):
 
 
 # --- AI automation (e.g. callback → calendar) ---
+
+@app.options("/automation/callback-to-calendar/{summary_id}")
+def options_automation_callback(summary_id: str):
+    return {}
 
 @app.post("/automation/callback-to-calendar/{summary_id}")
 def automation_callback_to_calendar(summary_id: str):
