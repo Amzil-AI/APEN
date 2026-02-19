@@ -36,7 +36,7 @@ Copy `.env.example` to `.env`. Key variables:
 | `GOOGLE_CALENDAR_ID` | Calendar ID (e.g. `primary` or `c_xxx@group.calendar.google.com`) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | OAuth for calendar (when service account keys are blocked) |
 
-Calendar: use **OAuth** on Render — run `python scripts/oauth_refresh_token.py` once, add redirect URI `http://localhost:8766/` to your OAuth client if the script uses port 8766. See [RENDER.md](RENDER.md).
+Calendar: use **OAuth** on Render — run `python scripts/oauth_refresh_token.py` once, add redirect URI `http://localhost:8766/` to your OAuth client if the script uses port 8766.
 
 ### 3. Run
 
@@ -126,33 +126,19 @@ apen-agent-mvp/
 
 1. Set **Server URL** in Vapi to `https://your-app/webhooks/vapi`
 2. Add tools: `apen_route`, `apen_get_slots`, `apen_book_appointment`
-3. See [VAPI-ASSISTANT-SETUP.md](VAPI-ASSISTANT-SETUP.md) for full setup
+3. Configure tools in Vapi dashboard (apen_route, apen_get_slots, apen_book_appointment)
 
 ---
 
 ## Deploy on Render
 
-See [RENDER.md](RENDER.md). Summary:
+Summary:
 
 1. Connect repo, set **Root Directory** to `apen-agent-mvp`
 2. **Build:** `pip install -r requirements.txt`
 3. **Start:** `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
 4. **Env:** `BASE_URL`, `OPENAI_API_KEY`, `GOOGLE_CALENDAR_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`
 5. **Vapi:** Server URL = `https://your-app.onrender.com/webhooks/vapi`
-
----
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [MVP-SHOWCASE.md](MVP-SHOWCASE.md) | Product showcase (EN) — workflow, capabilities, deployment |
-| [MVP-SHOWCASE-FR.md](MVP-SHOWCASE-FR.md) | Same in French |
-| [DELIVER-AND-SHOW-MVP.md](DELIVER-AND-SHOW-MVP.md) | Demo flow |
-| [RENDER.md](RENDER.md) | Render deployment |
-| [VAPI-ASSISTANT-SETUP.md](VAPI-ASSISTANT-SETUP.md) | Vapi configuration |
-| [docs/PIPELINE.md](docs/PIPELINE.md) | Pipeline and architecture |
-| [docs/pilot-checklist.md](docs/pilot-checklist.md) | PoC / pilot steps |
 
 ---
 

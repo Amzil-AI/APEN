@@ -8,11 +8,6 @@
 *.md
 !README.md
 !apen-agent-mvp/README.md
-!apen-agent-mvp/MVP-SHOWCASE.md
-!apen-agent-mvp/MVP-SHOWCASE-FR.md
-!apen-agent-mvp/RENDER.md
-!apen-agent-mvp/VAPI-ASSISTANT-SETUP.md
-!apen-agent-mvp/DELIVER-AND-SHOW-MVP.md
 docs/
 **/docs/
 
