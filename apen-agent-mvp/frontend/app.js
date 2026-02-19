@@ -5,6 +5,17 @@
 
 const API = '';
 const LANG_KEY = 'apen-lang';
+const UI_LANG_KEY = 'apen-ui-lang';
+
+function getUILang() {
+  return (window.APEN_I18N && window.APEN_I18N.getUILang) ? window.APEN_I18N.getUILang() : (localStorage.getItem(UI_LANG_KEY) || localStorage.getItem(LANG_KEY) || 'en').slice(0, 2);
+}
+function t(key) {
+  return (window.APEN_I18N && window.APEN_I18N.t) ? window.APEN_I18N.t(key) : key;
+}
+function applyTranslations() {
+  if (window.APEN_I18N && window.APEN_I18N.applyTranslations) window.APEN_I18N.applyTranslations();
+}
 
 function setResult(el, content, type = '') {
   if (!el) return;
@@ -31,12 +42,19 @@ function getLang() {
 
 function setLang(lang) {
   localStorage.setItem(LANG_KEY, lang);
+  localStorage.setItem(UI_LANG_KEY, lang);
   const select = document.getElementById('langSelect');
   const intentLang = document.getElementById('intentLang');
   const audioLang = document.getElementById('audioLang');
+  const callRecLang = document.getElementById('callRecordingLang');
   if (select) select.value = lang;
   if (intentLang) intentLang.value = lang;
   if (audioLang) audioLang.value = lang;
+  if (callRecLang) callRecLang.value = lang;
+  applyTranslations();
+  if (typeof loadSummaries === 'function') loadSummaries();
+  if (typeof loadCalls === 'function') loadCalls();
+  if (typeof loadCalendarEvents === 'function') loadCalendarEvents();
 }
 
 function applyFlowAfterIntent(data, nextStepElId, scrollTargetId) {
@@ -49,12 +67,12 @@ function applyFlowAfterIntent(data, nextStepElId, scrollTargetId) {
   setNextStep(nextEl, '');
 
   if (action === 'book_appointment' && routing === 'in_agent') {
-    setNextStep(nextEl, '→ Offer slots in the « Available slots » section below.');
+    setNextStep(nextEl, t('nextOfferSlots'));
     if (scrollEl) scrollEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (action === 'provide_info' && routing === 'in_agent') {
-    setNextStep(nextEl, '→ Give the requested info (hours, address) or save a callback in « Callbacks ».');
+    setNextStep(nextEl, t('nextGiveInfo'));
   } else if (action === 'collect_summary' || routing === 'reception') {
-    setNextStep(nextEl, '→ Callback summary: see the « Callbacks » section below.');
+    setNextStep(nextEl, t('nextCallback'));
     if (document.getElementById('summaries')) document.getElementById('summaries').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
@@ -79,7 +97,7 @@ document.getElementById('intentBtn')?.addEventListener('click', async () => {
   const resultEl = document.getElementById('intentResult');
   const btn = document.getElementById('intentBtn');
   if (!msg) {
-    setResult(resultEl, 'Enter a message.', 'error');
+    setResult(resultEl, t('enterMessage'), 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
@@ -124,7 +142,7 @@ document.getElementById('audioBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('audioBtn');
   const file = fileInput?.files?.[0];
   if (!file) {
-    setResult(resultEl, 'Choose an audio file.', 'error');
+    setResult(resultEl, t('chooseFile'), 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
@@ -169,7 +187,7 @@ document.getElementById('slotsBtn')?.addEventListener('click', async () => {
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
     const lines = (data.slots || []).slice(0, 10).map(s => s.start + ' → ' + s.end);
-    setResult(resultEl, lines.length ? lines.join('\n') : 'No slots.', 'success');
+    setResult(resultEl, lines.length ? lines.join('\n') : t('noSlots'), 'success');
   } catch (e) {
     setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
   } finally {
@@ -188,7 +206,7 @@ document.getElementById('apptBtn')?.addEventListener('click', async () => {
   const resultEl = document.getElementById('apptResult');
   const btn = document.getElementById('apptBtn');
   if (!start || !end || !summary) {
-    setResult(resultEl, 'Fill in start, end and subject.', 'error');
+    setResult(resultEl, t('fillStartEndSubject'), 'error');
     return;
   }
   const startIso = new Date(start).toISOString();
@@ -210,7 +228,7 @@ document.getElementById('apptBtn')?.addEventListener('click', async () => {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
-    setResult(resultEl, 'Appointment created: ' + (data.htmlLink || data.id || JSON.stringify(data)), 'success');
+    setResult(resultEl, t('appointmentCreated') + ' ' + (data.htmlLink || data.id || JSON.stringify(data)), 'success');
     if (typeof loadCalendarEvents === 'function') loadCalendarEvents();
   } catch (e) {
     setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
@@ -224,14 +242,19 @@ function renderSummaries(list) {
   const container = document.getElementById('summariesList');
   if (!container) return;
   if (!list || list.length === 0) {
-    container.innerHTML = '<p class="card-desc">No summaries.</p>';
+    container.innerHTML = '<p class="card-desc">' + escapeHtml(t('noSummaries')) + '</p>';
     return;
   }
+  const transferTo = t('transferTo');
+  const designated = t('designated');
+  const addToCal = t('addToCalendarAi');
+  const calledBack = t('calledBack');
+  const closeBtn = t('close');
   container.innerHTML = list
     .map(
       (s) => {
         const d = s.designated_for_callback || {};
-        const designatedLine = (d.label && d.number) ? `Transfer to: ${escapeHtml(d.label)} — ${escapeHtml(d.number)}` : (d.label ? `Designated: ${escapeHtml(d.label)}` : '');
+        const designatedLine = (d.label && d.number) ? `${transferTo}: ${escapeHtml(d.label)} — ${escapeHtml(d.number)}` : (d.label ? `${designated}: ${escapeHtml(d.label)}` : '');
         return `
     <div class="summary-item" data-id="${s.id}">
       <div class="info">
@@ -240,9 +263,9 @@ function renderSummaries(list) {
         ${designatedLine ? `<div class="meta designated">${designatedLine}</div>` : ''}
       </div>
       <div class="actions">
-        <button type="button" class="btn btn-sm btn-primary" data-action="add-to-calendar" title="Create calendar event from this callback (AI)">Add to calendar (AI)</button>
-        ${s.status === 'pending' ? `<button type="button" class="btn btn-sm btn-secondary" data-action="called">Called back</button>` : ''}
-        <button type="button" class="btn btn-sm btn-secondary" data-action="closed">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" data-action="add-to-calendar" data-i18n-title="addToCalendarAi">${escapeHtml(addToCal)}</button>
+        ${s.status === 'pending' ? `<button type="button" class="btn btn-sm btn-secondary" data-action="called">${escapeHtml(calledBack)}</button>` : ''}
+        <button type="button" class="btn btn-sm btn-secondary" data-action="closed">${escapeHtml(closeBtn)}</button>
       </div>
     </div>
   `;
@@ -313,9 +336,19 @@ function renderCalls(list) {
   const container = document.getElementById('callsList');
   if (!container) return;
   if (!list || list.length === 0) {
-    container.innerHTML = '<p class="card-desc">No calls yet. Calls appear here when someone uses the Vapi number.</p>';
+    container.innerHTML = '<p class="card-desc">' + escapeHtml(t('noCalls')) + '</p>';
     return;
   }
+  const dtLabel = t('dateTime');
+  const callerLabel = t('caller');
+  const transcriptLabel = t('transcript');
+  const intentLabel = t('intent');
+  const actionLabel = t('action');
+  const outcomeLabel = t('outcome');
+  const importanceLabel = t('importance');
+  const schedulingLabel = t('scheduling');
+  const callbackRef = t('callbackRef');
+  const appointmentRef = t('appointmentRef');
   container.innerHTML = list
     .map(
       (c) => {
@@ -327,7 +360,7 @@ function renderCalls(list) {
         const action = last ? (last.action || '—') : '—';
         const outcome = last ? (last.outcome || '—') : '—';
         const importance = c.importance != null ? String(c.importance) : '—';
-        const scheduling = c.scheduling != null ? String(c.scheduling) : (c.appointment_id ? 'Appointment booked' : '—');
+        const scheduling = c.scheduling != null ? String(c.scheduling) : (c.appointment_id ? t('appointmentRef') : '—');
         const summaryId = c.summary_id || '';
         const appointmentId = c.appointment_id || '';
         const summaryReason = (c.summary_reason || '').slice(0, 150);
@@ -336,18 +369,18 @@ function renderCalls(list) {
     <div class="call-item">
       <p class="call-purpose" aria-label="Purpose">${escapeHtml(purpose)}</p>
       <dl class="call-fields">
-        <dt>Date & time</dt><dd>${escapeHtml(started)}</dd>
-        <dt>Caller</dt><dd>${escapeHtml(c.caller_phone || '—')}</dd>
-        <dt>Transcript</dt><dd class="call-transcript">${escapeHtml(transcript)}</dd>
-        <dt>Intent</dt><dd>${escapeHtml(intent)}</dd>
-        <dt>Action</dt><dd>${escapeHtml(action)}</dd>
-        <dt>Outcome</dt><dd>${escapeHtml(outcome)}</dd>
-        <dt>Importance</dt><dd>${escapeHtml(importance)}</dd>
-        <dt>Scheduling</dt><dd>${escapeHtml(scheduling)}</dd>
-        ${summaryReason ? `<dt>Reason</dt><dd class="call-reason">${escapeHtml(summaryReason)}${summaryReason.length >= 150 ? '…' : ''}</dd>` : ''}
+        <dt>${escapeHtml(dtLabel)}</dt><dd>${escapeHtml(started)}</dd>
+        <dt>${escapeHtml(callerLabel)}</dt><dd>${escapeHtml(c.caller_phone || '—')}</dd>
+        <dt>${escapeHtml(transcriptLabel)}</dt><dd class="call-transcript">${escapeHtml(transcript)}</dd>
+        <dt>${escapeHtml(intentLabel)}</dt><dd>${escapeHtml(intent)}</dd>
+        <dt>${escapeHtml(actionLabel)}</dt><dd>${escapeHtml(action)}</dd>
+        <dt>${escapeHtml(outcomeLabel)}</dt><dd>${escapeHtml(outcome)}</dd>
+        <dt>${escapeHtml(importanceLabel)}</dt><dd>${escapeHtml(importance)}</dd>
+        <dt>${escapeHtml(schedulingLabel)}</dt><dd>${escapeHtml(scheduling)}</dd>
+        ${summaryReason ? `<dt>${escapeHtml(t('reason'))}</dt><dd class="call-reason">${escapeHtml(summaryReason)}${summaryReason.length >= 150 ? '…' : ''}</dd>` : ''}
       </dl>
-      ${summaryId ? `<div class="call-ref">Callback: <code>${escapeHtml(summaryId)}</code></div>` : ''}
-      ${appointmentId ? `<div class="call-ref">Appointment: <code>${escapeHtml(appointmentId)}</code></div>` : ''}
+      ${summaryId ? `<div class="call-ref">${escapeHtml(callbackRef)}: <code>${escapeHtml(summaryId)}</code></div>` : ''}
+      ${appointmentId ? `<div class="call-ref">${escapeHtml(appointmentRef)}: <code>${escapeHtml(appointmentId)}</code></div>` : ''}
     </div>
   `;
       }
@@ -383,19 +416,21 @@ function renderCalendarEvents(events, calendarConfigured) {
   if (!container) return;
   if (!events || events.length === 0) {
     if (calendarConfigured === false) {
-      container.innerHTML = '<p class="result-box card-desc">Calendar not connected. Set <code>GOOGLE_APPLICATION_CREDENTIALS</code> (path to service account JSON) and <code>GOOGLE_CALENDAR_ID</code> on the server, then restart. <a href="https://developers.google.com/calendar/api/quickstart/python" target="_blank" rel="noopener">Google Calendar API</a>.</p>';
+      container.innerHTML = '<p class="result-box card-desc">' + escapeHtml(t('calendarNotConnected')) + ' <a href="https://developers.google.com/calendar/api/quickstart/python" target="_blank" rel="noopener">Google Calendar API</a>.</p>';
     } else {
-      container.innerHTML = '<p class="card-desc">No upcoming events. Create an appointment above.</p>';
+      container.innerHTML = '<p class="card-desc">' + escapeHtml(t('noUpcomingEvents')) + '</p>';
     }
     return;
   }
+  const descLabel = t('description');
+  const openInCal = t('openInCalendar');
   container.innerHTML = events
     .map(
       (ev) => {
         const desc = (ev.description || '').trim();
         const descShort = desc ? desc.slice(0, 120) + (desc.length > 120 ? '…' : '') : '';
-        const descBlock = desc ? `<details class="event-desc"><summary>Description</summary><pre class="event-desc-body">${escapeHtml(desc)}</pre></details>` : '';
-        const link = ev.htmlLink ? `<a href="${escapeHtml(ev.htmlLink)}" target="_blank" rel="noopener" class="event-link">Open in Calendar</a>` : '';
+        const descBlock = desc ? `<details class="event-desc"><summary>${escapeHtml(descLabel)}</summary><pre class="event-desc-body">${escapeHtml(desc)}</pre></details>` : '';
+        const link = ev.htmlLink ? `<a href="${escapeHtml(ev.htmlLink)}" target="_blank" rel="noopener" class="event-link">${escapeHtml(openInCal)}</a>` : '';
         return `
     <div class="calendar-event-item">
       <div class="event-time">${escapeHtml(formatEventDate(ev.start))}</div>
@@ -435,7 +470,7 @@ document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
   const resultEl = document.getElementById('sumAddResult');
   const btn = document.getElementById('sumAddBtn');
   if (!name || !phone || !reason) {
-    setResult(resultEl, 'Name, phone and reason required.', 'error');
+    setResult(resultEl, t('namePhoneReasonRequired'), 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
@@ -455,7 +490,7 @@ document.getElementById('sumAddBtn')?.addEventListener('click', async () => {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || r.statusText);
-    setResult(resultEl, 'Saved. ID: ' + data.id, 'success');
+    setResult(resultEl, t('savedId') + ' ' + data.id, 'success');
     document.getElementById('sumName').value = '';
     document.getElementById('sumPhone').value = '';
     document.getElementById('sumReason').value = '';
@@ -489,7 +524,7 @@ document.getElementById('testCallBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('testCallBtn');
   const transcript = (transcriptEl?.value || '').trim();
   if (!transcript) {
-    setResult(resultEl, 'Enter what the caller said.', 'error');
+    setResult(resultEl, t('enterCallerSaid'), 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
@@ -532,9 +567,9 @@ document.getElementById('testCallBtn')?.addEventListener('click', async () => {
     setResult(resultEl, lines.join('\n'), 'success');
     if (typeof loadCalls === 'function') loadCalls();
     if (data.response_type === 'appointment_booked') {
-      setNextStep(nextEl, 'An appointment was created. Check the Calendar section and Calls (Scheduling: Appointment booked).');
+      setNextStep(nextEl, t('nextAppointmentCreated'));
     } else if (data.response_type === 'callback') {
-      setNextStep(nextEl, 'A summary was saved. Refresh the Callbacks section to see it.');
+      setNextStep(nextEl, t('nextSummarySaved'));
     }
   } catch (e) {
     setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
@@ -553,7 +588,7 @@ document.getElementById('testCallBtnRecording')?.addEventListener('click', async
   const lang = document.getElementById('callRecordingLang')?.value || 'fr';
   const file = fileInput?.files?.[0];
   if (!file) {
-    setResult(resultEl, 'Choose a call recording file first.', 'error');
+    setResult(resultEl, t('chooseRecording'), 'error');
     return;
   }
   btn.dataset.label = btn.textContent;
@@ -571,7 +606,7 @@ document.getElementById('testCallBtnRecording')?.addEventListener('click', async
     if (!r1.ok) throw new Error(data1.detail || data1.message || r1.statusText || (r1.status === 503 ? 'Transcription unavailable. Set OPENAI_API_KEY on the server.' : 'Request failed'));
     const transcript = (data1.transcript || '').trim();
     if (!transcript) {
-      setResult(resultEl, 'No speech detected in the recording.', 'error');
+      setResult(resultEl, t('noSpeechRecording'), 'error');
       setLoading(btn, false);
       return;
     }
@@ -603,9 +638,9 @@ document.getElementById('testCallBtnRecording')?.addEventListener('click', async
     setResult(resultEl, lines.join('\n'), 'success');
     if (typeof loadCalls === 'function') loadCalls();
     if (data.response_type === 'appointment_booked') {
-      setNextStep(nextEl, 'An appointment was created. Check the Calendar section and Calls.');
+      setNextStep(nextEl, t('nextAppointmentCreated'));
     } else if (data.response_type === 'callback') {
-      setNextStep(nextEl, 'A summary was saved. See Callbacks.');
+      setNextStep(nextEl, t('nextSummarySee'));
     }
   } catch (e) {
     setResult(resultEl, 'Error: ' + (e.message || 'network'), 'error');
@@ -632,12 +667,16 @@ document.getElementById('voiceCopyBtn')?.addEventListener('click', () => {
   const input = document.getElementById('voiceWebhookUrl');
   const url = input?.value || input?.textContent;
   if (url && navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => { alert('URL copied.'); });
+    navigator.clipboard.writeText(url).then(() => { alert(t('urlCopied')); });
   }
 });
 
-// --- Language selector (drives intent/audio; default FR, persisted)
-setLang(getLang());
+// --- Language selector (UI + intent/audio; persisted)
+(function initLang() {
+  const stored = localStorage.getItem(UI_LANG_KEY) || localStorage.getItem(LANG_KEY) || 'en';
+  setLang(stored);
+  applyTranslations();
+})();
 document.getElementById('langSelect')?.addEventListener('change', function () {
   setLang(this.value);
 });
@@ -667,11 +706,8 @@ function openDetailsFromHash() {
 window.addEventListener('hashchange', openDetailsFromHash);
 openDetailsFromHash();
 
-// Init: health + load summaries + calls + calendar events + set default date
+// Init: health (loads triggered by initLang/setLang), set default date
 checkHealth();
-loadSummaries();
-loadCalls();
-loadCalendarEvents();
 const today = new Date().toISOString().slice(0, 10);
 const dateEl = document.getElementById('slotsDate');
 if (dateEl && !dateEl.value) dateEl.value = today;

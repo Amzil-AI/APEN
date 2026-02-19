@@ -14,17 +14,17 @@
     <div class="header-inner">
       <h1 class="logo">APEN <span class="logo-sub">Agent MVP</span></h1>
       <nav class="nav">
-        <a href="#details-intent-audio" class="nav-link">Intent & Audio</a>
-        <a href="#details-pipeline" class="nav-link">What happens next</a>
-        <a href="#test-call" class="nav-link">Test call</a>
-        <a href="#calls" class="nav-link">Calls</a>
-        <a href="#summaries" class="nav-link">Callbacks</a>
-        <a href="#calendar" class="nav-link">Calendar</a>
-        <a href="#voice" class="nav-link">Voice</a>
+        <a href="#details-intent-audio" class="nav-link" data-i18n="navIntentAudio"></a>
+        <a href="#details-pipeline" class="nav-link" data-i18n="navPipeline"></a>
+        <a href="#test-call" class="nav-link" data-i18n="navTestCall"></a>
+        <a href="#calls" class="nav-link" data-i18n="navCalls"></a>
+        <a href="#summaries" class="nav-link" data-i18n="navCallbacks"></a>
+        <a href="#calendar" class="nav-link" data-i18n="navCalendar"></a>
+        <a href="#voice" class="nav-link" data-i18n="navVoice"></a>
       </nav>
       <div class="header-right">
         <div class="lang-wrap">
-          <label class="lang-label" for="langSelect">Language</label>
+          <label class="lang-label" for="langSelect" data-i18n="lang"></label>
           <select id="langSelect" class="input lang-select" aria-label="Language for intent detection">
             <option value="fr">FR</option>
             <option value="en">EN</option>
@@ -37,33 +37,33 @@
 
   <main class="main">
     <section class="hero">
-      <p class="hero-project">APEN conversational agent — call reception across Paris, Le Havre, Reims, Nancy and Nantes. MVP scope per feasibility study.</p>
-      <p class="hero-tagline">24/7 reception · Appointment booking (e.g. uniform collection) · Call qualification · Transfers · Callback summaries</p>
-      <p class="hero-desc">Intent engine and APIs for calendar, callbacks and voice. Connect your phone system (e.g. Vapi) to this API for live calls.</p>
+      <p class="hero-project" data-i18n="heroProject"></p>
+      <p class="hero-tagline" data-i18n="heroTagline"></p>
+      <p class="hero-desc" data-i18n="heroDesc"></p>
     </section>
 
     <!-- Top dropdown: Intent & Audio tests -->
     <section class="card dropdown-section">
       <details class="dropdown-details" id="details-intent-audio">
-        <summary class="dropdown-summary">Intent & Audio tests</summary>
+        <summary class="dropdown-summary" data-i18n="dropdownIntentAudio"></summary>
         <div class="dropdown-inner">
           <div id="intent" class="card-inner">
-            <h3>Intent detection (text)</h3>
-            <p class="card-desc">Enter a phrase as a caller would: the engine detects intent and action.</p>
+            <h3 data-i18n="intentTitle"></h3>
+            <p class="card-desc" data-i18n="intentDesc"></p>
             <div class="form-row">
-              <input type="text" id="intentMessage" placeholder="e.g. I'd like an appointment to pick up my uniform" class="input input-wide">
+              <input type="text" id="intentMessage" class="input input-wide" data-i18n-placeholder="intentPlaceholder">
               <select id="intentLang" class="input" aria-label="Message language">
                 <option value="fr">FR</option>
                 <option value="en">EN</option>
               </select>
-              <button type="button" id="intentBtn" class="btn btn-primary">Detect intent</button>
+              <button type="button" id="intentBtn" class="btn btn-primary" data-i18n="detectIntent">Detect intent</button>
             </div>
             <div id="intentNextStep" class="next-step" aria-live="polite"></div>
             <div id="intentResult" class="result-box" aria-live="polite"></div>
           </div>
           <div id="audio" class="card-inner">
-            <h3>Audio test (Whisper + intent)</h3>
-            <p class="card-desc">Upload an audio file (e.g. call recording): transcription then intent detection and routing.</p>
+            <h3 data-i18n="audioTitle"></h3>
+            <p class="card-desc" data-i18n="audioDesc"></p>
             <div class="form-row">
               <input type="file" id="audioFile" accept=".mp3,.wav,.m4a,.webm,.ogg,.flac" class="input-file">
               <span id="audioFileName" class="audio-file-name" aria-live="polite"></span>
@@ -71,7 +71,7 @@
                 <option value="fr">FR</option>
                 <option value="en">EN</option>
               </select>
-              <button type="button" id="audioBtn" class="btn btn-primary">Transcribe and detect</button>
+              <button type="button" id="audioBtn" class="btn btn-primary" data-i18n="transcribeDetect">Transcribe and detect</button>
             </div>
             <div id="audioNextStep" class="next-step" aria-live="polite"></div>
             <div id="audioResult" class="result-box" aria-live="polite"></div>
@@ -83,39 +83,39 @@
     <!-- Top dropdown: What happens next -->
     <section class="card dropdown-section">
       <details class="dropdown-details" id="details-pipeline">
-        <summary class="dropdown-summary">What happens next</summary>
+        <summary class="dropdown-summary" data-i18n="dropdownPipeline"></summary>
         <div class="dropdown-inner" id="pipeline">
-          <p class="card-desc">Real flow: inbound call, qualification, then book, transfer or callback summary.</p>
+          <p class="card-desc" data-i18n="pipelineDesc"></p>
           <ol class="pipeline-steps">
-            <li><strong>Take the call</strong> — 24/7 reception (Vapi or other).</li>
-            <li><strong>Greet</strong> — Say the opening line (voice prompt API).</li>
-            <li><strong>Get what they said</strong> — Speech to text (STT); transcript is sent to the API.</li>
-            <li><strong>Check intent</strong> — Appointment, callback, info, emergency, after-sales, partner, other.</li>
-            <li><strong>Decide action</strong> — Book appointment, transfer, or collect callback summary.</li>
-            <li><strong>Act</strong> — Offer slots and create appointment; transfer to the right number; or save a callback summary.</li>
+            <li data-i18n="pipeline1"></li>
+            <li data-i18n="pipeline2"></li>
+            <li data-i18n="pipeline3"></li>
+            <li data-i18n="pipeline4"></li>
+            <li data-i18n="pipeline5"></li>
+            <li data-i18n="pipeline6"></li>
           </ol>
-          <p class="pipeline-summary">So: <strong>Call → Greet → Speech (transcript) → Intent → Action → Book / Transfer / Callback</strong>.</p>
+          <p class="pipeline-summary" data-i18n="pipelineSummary"></p>
         </div>
       </details>
     </section>
 
     <!-- 1. Two windows: Simulated | Vapi -->
     <section class="two-panes-section">
-      <h2 class="two-panes-title">1. Try the flow</h2>
+      <h2 class="two-panes-title" data-i18n="tryFlow"></h2>
       <div class="two-panes">
         <section id="test-call" class="card pane pane-simulated">
-          <h3 class="pane-heading">Simulated</h3>
-          <p class="card-desc">Simulate a call: enter text or upload a call recording. Then transcribe → intent → callback or appointment (same flow as below).</p>
+          <h3 class="pane-heading" data-i18n="simulated"></h3>
+          <p class="card-desc" data-i18n="simulatedDesc"></p>
           <div class="form-row">
-            <label for="simInputType" class="form-label-optional">Input</label>
+            <label for="simInputType" class="form-label-optional" data-i18n="input"></label>
             <select id="simInputType" class="input" aria-label="Simulated input type">
-              <option value="text">Enter text</option>
-              <option value="recording">Upload call recording</option>
+              <option value="text" data-i18n="enterText">Enter text</option>
+              <option value="recording" data-i18n="uploadRecording">Upload call recording</option>
             </select>
           </div>
           <div id="simTextRow" class="form-row">
-            <input type="text" id="callTranscript" class="input input-wide" placeholder="e.g. I'd like to be called back about opening hours" aria-label="What the caller said">
-            <button type="button" id="testCallBtn" class="btn btn-primary">Simulate call</button>
+            <input type="text" id="callTranscript" class="input input-wide" data-i18n-placeholder="callerSaidPlaceholder" aria-label="What the caller said">
+            <button type="button" id="testCallBtn" class="btn btn-primary" data-i18n="simulateCall">Simulate call</button>
           </div>
           <div id="simRecordingRow" class="form-row" style="display: none;">
             <input type="file" id="callRecordingFile" accept=".mp3,.wav,.m4a,.webm,.ogg,.flac" class="input-file" aria-label="Call recording">
@@ -124,61 +124,61 @@
               <option value="fr">FR</option>
               <option value="en">EN</option>
             </select>
-            <button type="button" id="testCallBtnRecording" class="btn btn-primary">Simulate call (transcribe → intent → rest)</button>
+            <button type="button" id="testCallBtnRecording" class="btn btn-primary" data-i18n="simulateCallRecording">Simulate call (transcribe → intent → rest)</button>
           </div>
           <div class="form-row">
-            <label for="callPhone" class="form-label-optional">Caller phone (optional)</label>
+            <label for="callPhone" class="form-label-optional" data-i18n="callerPhone"></label>
             <input type="tel" id="callPhone" class="input" placeholder="+33 6 00 00 00 00" style="max-width: 12rem;" aria-label="Caller number">
           </div>
           <div id="testCallResult" class="result-box" aria-live="polite"></div>
           <div id="testCallNextStep" class="next-step" aria-live="polite"></div>
         </section>
         <section id="voice" class="card pane pane-vapi">
-          <h3 class="pane-heading">Vapi (live calls)</h3>
-          <p class="card-desc">Call to test: <strong><a href="tel:+16614809377">+1 661 480 9377</a></strong>. Greeting, intent, transfer, callback.</p>
+          <h3 class="pane-heading" data-i18n="vapiLive"></h3>
+          <p class="card-desc"><span data-i18n="vapiDesc"></span> <strong><a href="tel:+16614809377">+1 661 480 9377</a></strong>. <span data-i18n="vapiGreeting"></span></p>
           <div class="form-row voice-url-row">
-            <input type="text" id="voiceWebhookUrl" class="input input-wide input-readonly" readonly spellcheck="false" aria-label="Vapi webhook URL to paste in Vapi dashboard">
-            <button type="button" id="voiceCopyBtn" class="btn btn-secondary">Copy URL</button>
+            <input type="text" id="voiceWebhookUrl" class="input input-wide input-readonly" readonly spellcheck="false" aria-label="Vapi webhook URL">
+            <button type="button" id="voiceCopyBtn" class="btn btn-secondary" data-i18n="copyUrl">Copy URL</button>
           </div>
-          <p class="card-desc card-desc-small"><a href="/docs" target="_blank" rel="noopener">API documentation</a>: <code>GET /voice/prompt</code>, <code>POST /voice/process</code>, <code>POST /webhooks/vapi</code>.</p>
+          <p class="card-desc card-desc-small"><a href="/docs" target="_blank" rel="noopener" data-i18n="apiDocs">API documentation</a>: <code>GET /voice/prompt</code>, <code>POST /voice/process</code>, <code>POST /webhooks/vapi</code>.</p>
         </section>
       </div>
     </section>
 
     <!-- 2. Calls — see the call you just made -->
     <section id="calls" class="card">
-      <h2>2. Calls</h2>
-      <p class="card-desc">Recent calls: transcript, intent, action, outcome, importance, and scheduling (callback or appointment).</p>
+      <h2 data-i18n="callsTitle">2. Calls</h2>
+      <p class="card-desc" data-i18n="callsDesc"></p>
       <div class="form-row">
-        <button type="button" id="callsRefresh" class="btn btn-secondary">Refresh</button>
+        <button type="button" id="callsRefresh" class="btn btn-secondary" data-i18n="refresh">Refresh</button>
       </div>
       <div id="callsList" class="calls-list" aria-live="polite"></div>
     </section>
 
     <!-- 3. Callbacks — from the call above -->
     <section id="summaries" class="card">
-      <h2>3. Callbacks (callback summaries)</h2>
-      <p class="card-desc">List of requests pending callback; add manually or created automatically by the agent.</p>
+      <h2 data-i18n="callbacksTitle">3. Callbacks</h2>
+      <p class="card-desc" data-i18n="callbacksDesc"></p>
       <div class="form-row">
         <select id="summariesFilter" class="input">
-          <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="called">Called back</option>
-          <option value="closed">Closed</option>
+          <option value="" data-i18n="filterAll">All</option>
+          <option value="pending" data-i18n="filterPending">Pending</option>
+          <option value="called" data-i18n="filterCalled">Called back</option>
+          <option value="closed" data-i18n="filterClosed">Closed</option>
         </select>
-        <button type="button" id="summariesRefresh" class="btn btn-secondary">Refresh</button>
+        <button type="button" id="summariesRefresh" class="btn btn-secondary" data-i18n="refresh">Refresh</button>
       </div>
       <div id="summariesList" class="summaries-list" aria-live="polite"></div>
       <hr class="divider">
-      <h3>Add a summary</h3>
+      <h3 data-i18n="addSummary">Add a summary</h3>
       <div class="form-grid">
-        <label>Name</label>
-        <input type="text" id="sumName" class="input" placeholder="Caller name">
-        <label>Phone</label>
+        <label data-i18n="name">Name</label>
+        <input type="text" id="sumName" class="input" data-i18n-placeholder="name">
+        <label data-i18n="phone">Phone</label>
         <input type="tel" id="sumPhone" class="input" placeholder="+33 6 00 00 00 00">
-        <label>Reason</label>
-        <input type="text" id="sumReason" class="input" placeholder="Callback reason">
-        <label>Site</label>
+        <label data-i18n="reason">Reason</label>
+        <input type="text" id="sumReason" class="input" data-i18n-placeholder="reason">
+        <label data-i18n="site">Site</label>
         <select id="sumSite" class="input">
           <option value="paris">Paris</option>
           <option value="le_havre">Le Havre</option>
@@ -186,51 +186,51 @@
           <option value="nancy">Nancy</option>
           <option value="nantes">Nantes</option>
         </select>
-        <label>Urgency</label>
+        <label data-i18n="urgency">Urgency</label>
         <select id="sumUrgency" class="input">
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
+          <option value="low" data-i18n="low">Low</option>
+          <option value="medium" data-i18n="medium">Medium</option>
+          <option value="high" data-i18n="high">High</option>
         </select>
       </div>
       <div class="form-row">
-        <button type="button" id="sumAddBtn" class="btn btn-primary">Save</button>
+        <button type="button" id="sumAddBtn" class="btn btn-primary" data-i18n="save">Save</button>
       </div>
       <div id="sumAddResult" class="result-box" aria-live="polite"></div>
     </section>
 
     <!-- 4. Calendar showcase: upcoming events, slots, create appointment -->
     <section id="calendar" class="card calendar-showcase">
-      <h2>4. Calendar</h2>
-      <p class="card-desc">Upcoming appointments (all info findable: caller, reason, designated person). Slots and create form below.</p>
+      <h2 data-i18n="calendarTitle">4. Calendar</h2>
+      <p class="card-desc" data-i18n="calendarDesc"></p>
       <div class="form-row">
-        <button type="button" id="calendarEventsRefresh" class="btn btn-secondary">Refresh upcoming events</button>
+        <button type="button" id="calendarEventsRefresh" class="btn btn-secondary" data-i18n="refreshEvents">Refresh upcoming events</button>
       </div>
       <div id="calendarEventsList" class="calendar-events-list" aria-live="polite"></div>
       <hr class="divider">
-      <h3>Available slots</h3>
+      <h3 data-i18n="availableSlots">Available slots</h3>
       <div class="form-row">
         <input type="date" id="slotsDate" class="input">
-        <button type="button" id="slotsBtn" class="btn btn-primary">Load slots</button>
+        <button type="button" id="slotsBtn" class="btn btn-primary" data-i18n="loadSlots">Load slots</button>
       </div>
       <div id="slotsResult" class="result-box" aria-live="polite"></div>
       <hr class="divider">
-      <h3>Create an appointment</h3>
-      <p class="card-desc">Add caller/reason/designated in the description so it’s findable in the calendar.</p>
+      <h3 data-i18n="createAppointment">Create an appointment</h3>
+      <p class="card-desc" data-i18n="apptDesc">Add caller/reason/designated in the description so it’s findable in the calendar.</p>
       <div class="form-grid">
-        <label>Start (date/time)</label>
+        <label data-i18n="start">Start (date/time)</label>
         <input type="datetime-local" id="apptStart" class="input">
-        <label>End (date/time)</label>
+        <label data-i18n="end">End (date/time)</label>
         <input type="datetime-local" id="apptEnd" class="input">
-        <label>Subject</label>
+        <label data-i18n="subject">Subject</label>
         <input type="text" id="apptSummary" placeholder="Uniform collection – David" class="input">
-        <label>Description (caller, reason, designated)</label>
-        <textarea id="apptDescription" class="input input-textarea" placeholder="Caller: +33… | Reason: … | Designated: Reception" rows="2"></textarea>
-        <label>Email (optional)</label>
+        <label data-i18n="description">Description (caller, reason, designated)</label>
+        <textarea id="apptDescription" class="input input-textarea" data-i18n-placeholder="apptDescPlaceholder" rows="2"></textarea>
+        <label data-i18n="emailOptional">Email (optional)</label>
         <input type="email" id="apptEmail" placeholder="email@example.com" class="input">
       </div>
       <div class="form-row">
-        <button type="button" id="apptBtn" class="btn btn-primary">Save appointment</button>
+        <button type="button" id="apptBtn" class="btn btn-primary" data-i18n="saveAppointment">Save appointment</button>
       </div>
       <div id="apptResult" class="result-box" aria-live="polite"></div>
     </section>
@@ -239,11 +239,12 @@
   </main>
 
   <footer class="footer">
-    <a href="/docs" target="_blank" rel="noopener">API Docs</a> ·
-    <a href="https://docs.vapi.ai/server-url" target="_blank" rel="noopener">Vapi Server URL</a> ·
+    <a href="/docs" target="_blank" rel="noopener" data-i18n="footerDocs">API Docs</a> ·
+    <a href="https://docs.vapi.ai/server-url" target="_blank" rel="noopener" data-i18n="footerVapi">Vapi Server URL</a> ·
     APEN Agent MVP
   </footer>
 
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
