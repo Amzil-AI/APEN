@@ -2,6 +2,47 @@
 
 AI conversational agent for 24/7 call reception — appointment booking, callback summaries, smart transfers. Backend + web dashboard.
 
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/new)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109%2B-green)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** | Quick commands and common tasks |
+| **[RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)** | Complete deployment guide |
+| **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** | Step-by-step checklist |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | System architecture & data flow |
+| **[RAILWAY_SETUP_COMPLETE.md](RAILWAY_SETUP_COMPLETE.md)** | Setup confirmation |
+
+## 🚀 Quick Start
+
+See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for fast setup and common commands.
+
+### Local Development
+```bash
+make setup    # Set up environment
+make run      # Start server
+```
+
+Visit `http://localhost:8000` for the dashboard.
+
+### Railway Deployment (Recommended)
+Railway deployment is fully configured and ready to go:
+
+```bash
+# 1. Push to GitHub
+# 2. Go to railway.app → New Project → Deploy from GitHub
+# 3. Select this repo
+# 4. Add environment variables
+# 5. Done!
+```
+
+**See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) for complete guide.**  
+**See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for step-by-step checklist.**
+
 ## Features
 
 - **24/7 reception** — No wait; voice provider (Vapi, Bland, etc.) calls our API *(Vapi in testing)*
@@ -58,7 +99,33 @@ Open http://localhost:8000/ — dashboard (EN/FR, light/dark theme).
 - **Callbacks** — Pending/called/closed; Add to calendar (AI)
 - **Calendar** — Events, slots, create appointment
 
-## Deploy (Render)
+## Deploy
+
+### Railway (Recommended)
+
+Railway deployment is fully automated with the included configuration files.
+
+1. **Quick Deploy**: 
+   - Go to [railway.app](https://railway.app)
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select this repository
+   - Railway auto-detects Python and uses `railway.toml`
+
+2. **Set Environment Variables** in Railway dashboard:
+   ```
+   BASE_URL=https://your-app.railway.app
+   OPENAI_API_KEY=sk-...
+   GOOGLE_CALENDAR_ID=primary
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   GOOGLE_REFRESH_TOKEN=...
+   ```
+
+3. **Configure Vapi**: Server URL = `https://your-app.railway.app/webhooks/vapi`
+
+**See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) for detailed guide.**
+
+### Render (Alternative)
 
 1. Connect repo, **Root Directory** = `apen-agent-mvp`
 2. **Build:** `pip install -r requirements.txt`
