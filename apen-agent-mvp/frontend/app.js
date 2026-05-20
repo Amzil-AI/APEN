@@ -401,7 +401,57 @@ async function loadCalls() {
   }
 }
 
-document.getElementById('callsRefresh')?.addEventListener('click', loadCalls);
+async function syncAndLoadCalls() {
+  const btn = document.getElementById('callsRefresh');
+  const container = document.getElementById('callsList');
+  if (!container) return;
+  
+  // Show syncing state
+  const originalText = btn ? btn.textContent : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Syncing from VAPI...';
+  }
+  
+  try {
+    // First, try to sync from VAPI (optional if backend route exists)
+    let syncMessage = '';
+    try {
+      const syncR = await fetch(API + '/vapi/sync');
+      const syncText = await syncR.text();
+      let syncData = null;
+      try {
+        syncData = syncText ? JSON.parse(syncText) : null;
+      } catch (_) {
+        syncData = null;
+      }
+
+      if (syncR.ok && syncData && Number(syncData.synced || 0) > 0) {
+        syncMessage = '<p class="result-box success">✅ Synced ' + Number(syncData.synced || 0) + ' new call(s) from VAPI!</p>';
+      } else if (!syncR.ok && syncR.status !== 404) {
+        syncMessage = '<p class="result-box error">Sync warning: ' + escapeHtml(syncData?.detail || syncR.statusText || 'Sync unavailable') + '</p>';
+      }
+    } catch (_) {
+      // Ignore sync errors; still refresh calls list
+    }
+
+    // Then load all calls (always)
+    await loadCalls();
+    if (syncMessage) {
+      container.insertAdjacentHTML('afterbegin', syncMessage);
+    }
+  } catch (e) {
+    container.innerHTML = '<p class="result-box error">Sync error: ' + escapeHtml(e.message) + '</p>';
+  } finally {
+    // Restore button
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+}
+
+document.getElementById('callsRefresh')?.addEventListener('click', syncAndLoadCalls);
 
 // --- Calendar: upcoming events (showcase) ---
 function formatEventDate(iso) {

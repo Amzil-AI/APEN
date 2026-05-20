@@ -31,6 +31,7 @@ from . import planning
 from . import email_send
 from . import vapi_webhook
 from . import ai_automation
+from . import vapi_sync
 
 log = logging.getLogger("apen-agent-mvp")
 
@@ -661,6 +662,29 @@ def email_send_endpoint(body: EmailSendRequest):
     if not ok:
         raise HTTPException(503, "Send failed.")
     return {"sent": True}
+
+
+# --- VAPI Sync (automatic sync from VAPI API to dashboard) ---
+
+@app.post("/vapi/sync")
+def vapi_sync_endpoint():
+    """
+    Manually trigger VAPI call sync. Fetches recent calls from VAPI API,
+    transcribes them, and adds to dashboard. Requires VAPI_PRIVATE_KEY env.
+    Can be called periodically by cron or external scheduler.
+    """
+    stats = vapi_sync.sync_recent_calls(limit=20)
+    return {
+        "ok": True,
+        "message": f"Synced {stats['synced']} new calls from VAPI",
+        **stats
+    }
+
+
+@app.get("/vapi/sync")
+def vapi_sync_get():
+    """GET version of sync endpoint (for easy browser/cron testing)"""
+    return vapi_sync_endpoint()
 
 
 if __name__ == "__main__":
