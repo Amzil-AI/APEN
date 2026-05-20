@@ -403,19 +403,35 @@ async function loadCalls() {
 
 async function syncAndLoadCalls() {
   const btn = document.getElementById('callsRefresh');
+  const status = document.getElementById('callsSyncStatus');
   const container = document.getElementById('callsList');
   if (!container) return;
+
+  const fmt = (key, vars = {}) => {
+    let out = t(key);
+    Object.keys(vars).forEach((k) => {
+      out = out.replace(`{${k}}`, String(vars[k]));
+    });
+    return out;
+  };
+
+  const setStatus = (kind, msg) => {
+    if (!status) return;
+    status.className = 'result-box' + (kind ? ' ' + kind : '');
+    status.textContent = msg;
+  };
   
   // Show syncing state
-  const originalText = btn ? btn.textContent : '';
+  const originalText = btn ? (btn.dataset.label || btn.textContent || '') : '';
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'Syncing from VAPI...';
+    btn.textContent = t('syncingVapi');
   }
+  setStatus('', t('syncingVapi'));
   
   try {
     // First, try to sync from VAPI (optional if backend route exists)
-    let syncMessage = '';
+    let syncStatus = null;
     try {
       const syncR = await fetch(API + '/vapi/sync');
       const syncText = await syncR.text();
@@ -427,21 +443,45 @@ async function syncAndLoadCalls() {
       }
 
       if (syncR.ok && syncData && Number(syncData.synced || 0) > 0) {
-        syncMessage = '<p class="result-box success">✅ Synced ' + Number(syncData.synced || 0) + ' new call(s) from VAPI!</p>';
+        syncStatus = {
+          kind: 'success',
+          text: fmt('syncDone', { count: Number(syncData.synced || 0) }),
+        };
+      } else if (syncR.ok) {
+        syncStatus = {
+          kind: '',
+          text: t('syncNoNew'),
+        };
+      } else if (syncR.status === 404) {
+        syncStatus = {
+          kind: '',
+          text: t('syncUnavailable'),
+        };
       } else if (!syncR.ok && syncR.status !== 404) {
-        syncMessage = '<p class="result-box error">Sync warning: ' + escapeHtml(syncData?.detail || syncR.statusText || 'Sync unavailable') + '</p>';
+        syncStatus = {
+          kind: 'error',
+          text: fmt('syncWarning', { message: (syncData?.detail || syncR.statusText || 'Sync unavailable') }),
+        };
       }
     } catch (_) {
-      // Ignore sync errors; still refresh calls list
+      syncStatus = {
+        kind: 'error',
+        text: fmt('syncFailed', { message: 'Network error' }),
+      };
     }
 
     // Then load all calls (always)
     await loadCalls();
-    if (syncMessage) {
-      container.insertAdjacentHTML('afterbegin', syncMessage);
+    if (syncStatus) {
+      const now = new Date();
+      const when = fmt('syncLastUpdated', {
+        time: now.toLocaleString(),
+      });
+      setStatus(syncStatus.kind, syncStatus.text + ' ' + when);
     }
   } catch (e) {
     container.innerHTML = '<p class="result-box error">Sync error: ' + escapeHtml(e.message) + '</p>';
+    setStatus('error', fmt('syncFailed', { message: e.message }));
   } finally {
     // Restore button
     if (btn) {
